@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eJSIS Data Entry</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo-placeholder {
+            width: 150px;
+            height: 60px;
+            background-color: #ddd;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .button-container {
+            margin-bottom: 15px;
+        }
+
+        .data-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .data-button.disabled {
+            background-color: #cccccc;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .data-button.empty {
+            background-color: #cccccc;
+            color: #333;
+        }
+
+        .data-button.partial {
+            background-color: #ff9933;
+            color: white;
+        }
+
+        .data-button.complete {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .data-button:not(.disabled):active {
+            transform: scale(0.98);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .button-grid .data-button {
+            padding: 30px 15px;
+            font-size: 16px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .clear-button {
+            width: 40%;
+            padding: 10px;
+            font-size: 14px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 40px auto 0 auto;
+            display: block;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .clear-button:active {
+            background-color: #cc0000;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        #modal-scanner {
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close-button {
+            background-color: #666;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Hide spinner arrows on number inputs */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .field-section-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            margin: 20px 0 10px 0;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .field-section-header:first-of-type {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        small {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .instructions-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .instructions-button:active {
+            background-color: #1976D2;
+        }
+
+        .instructions-content {
+            line-height: 1.6;
+        }
+
+        .instructions-content h3 {
+            margin: 20px 0 10px 0;
+            color: #333;
+        }
+
+        .instructions-content p {
+            margin-bottom: 10px;
+        }
+
+        .instructions-content ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .instructions-content li {
+            margin-bottom: 8px;
+        }
+
+        .color-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+        }
+
+        .color-swatch.gray { background-color: #cccccc; }
+        .color-swatch.orange { background-color: #ff9933; }
+        .color-swatch.green { background-color: #4CAF50; }
+
+        /* Scanner styles */
+        .input-with-scan {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-with-scan input {
+            flex: 1;
+        }
+
+        .scan-button {
+            padding: 10px 12px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+        .scan-button:active {
+            background-color: #1976D2;
+        }
+
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .scanner-container video {
+            width: 100%;
+            display: block;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 100px;
+            border: 3px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+        }
+
+        .scanner-status {
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .scanner-status.error {
+            color: #f44336;
+        }
+
+        .scanner-status.success {
+            color: #4CAF50;
+        }
+
+        /* Geolocate button styles */
+        .geolocate-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .geolocate-button:active {
+            background-color: #388E3C;
+        }
+
+        .geolocate-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .geolocate-status {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .geolocate-status.error {
+            color: #f44336;
+        }
+
+        .geolocate-status.success {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="logo-placeholder">LOGO</div>
+    </div>
+
+    <button class="instructions-button" onclick="openInstructionsModal()">
+        Instructions
+    </button>
+
+    <div class="button-container">
+        <button id="startJSIS" class="data-button empty" onclick="openModal('startJSIS')">
+            Start eJSIS
+        </button>
+    </div>
+
+    <div class="button-grid">
+        <button id="data1" class="data-button disabled" onclick="openModal('data1')">
+            Contact Info
+        </button>
+        <button id="data6" class="data-button disabled" onclick="openModal('data6')">
+            Problem Summary
+        </button>
+        <button id="data3" class="data-button disabled" onclick="openModal('data3')">
+            Refrigerant Data
+        </button>
+        <button id="data4" class="data-button disabled" onclick="openModal('data4')">
+            Line Set Details
+        </button>
+        <button id="data2" class="data-button disabled" onclick="openModal('data2')">
+            Air & Airflow Data
+        </button>
+        <button id="data5" class="data-button disabled" onclick="openModal('data5')">
+            Electrical Data
+        </button>
+        <button id="data7" class="data-button disabled" onclick="openModal('data7')">
+            Additional Info
+        </button>
+        <button id="data8" class="data-button disabled" onclick="openModal('data8')">
+            Photos
+        </button>
+    </div>
+
+    <button id="submitButton" class="submit-button data-button disabled" onclick="submitForm()">
+        Submit All Data
+    </button>
+
+    <button class="clear-button" onclick="clearForm()">
+        Clear All Data
+    </button>
+
+    <!-- Modal for Barcode Scanner -->
+    <div id="modal-scanner" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Scan Barcode</div>
+                <button class="close-button" onclick="stopScan()">Cancel</button>
+            </div>
+
+            <div class="scanner-container">
+                <video id="scanner-video" autoplay playsinline></video>
+                <div class="scanner-overlay"></div>
+            </div>
+
+            <div id="scanner-status" class="scanner-status">
+                Initializing camera...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Instructions -->
+    <div id="modal-instructions" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Instructions</div>
+                <button class="close-button" onclick="closeInstructionsModal()">Close</button>
+            </div>
+
+            <div class="instructions-content">
+                <h3>Getting Started</h3>
+                <ol>
+                    <li><strong>Click "Start eJSIS"</strong> first to enter the equipment model and serial numbers.</li>
+                    <li>Once equipment info is complete, the other data entry buttons will unlock.</li>
+                    <li>Fill out each section by clicking on its button.</li>
+                    <li>When all required sections are complete, the "Submit All Data" button will turn green.</li>
+                </ol>
+
+                <h3>Button Colors</h3>
+                <div class="color-legend">
+                    <div class="color-item">
+                        <div class="color-swatch gray"></div>
+                        <span><strong>Gray</strong> - Empty or not started</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-swatch orange"></div>
+                        <span><strong>Orange</strong> - Partially complete</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-swatch green"></div>
+                        <span><strong>Green</strong> - Complete</span>
+                    </div>
+                </div>
+
+                <h3>Submitting</h3>
+                <p>Once all required sections show green, the "Submit All Data" button will become active. Click it to submit your job site information sheet.</p>
+
+                <p><small>Note: Photos are optional and will not prevent submission.</small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Start JSIS -->
+    <div id="modal-startJSIS" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Equipment Identification</div>
+                <button class="close-button" onclick="closeModal('startJSIS')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="outdoor-model">Outdoor Unit Model # *</label>
+                <input type="text" id="outdoor-model" placeholder="Enter outdoor unit model number">
+            </div>
+            <div class="form-group">
+                <label for="outdoor-serial">Outdoor Unit Serial # *</label>
+                <div class="input-with-scan">
+                    <input type="text" id="outdoor-serial" placeholder="Enter outdoor unit serial number">
+                    <button type="button" class="scan-button" onclick="startScan('outdoor-serial')">Scan</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="indoor-model">Indoor Unit Model # (Air Handler or Furnace) *</label>
+                <input type="text" id="indoor-model" placeholder="Enter indoor unit model number">
+            </div>
+            <div class="form-group">
+                <label for="indoor-serial">Indoor Unit Serial # *</label>
+                <div class="input-with-scan">
+                    <input type="text" id="indoor-serial" placeholder="Enter indoor unit serial number">
+                    <button type="button" class="scan-button" onclick="startScan('indoor-serial')">Scan</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="coil-model">Coil Model # (if separate)</label>
+                <input type="text" id="coil-model" placeholder="Enter coil model number">
+            </div>
+            <div class="form-group">
+                <label for="coil-serial">Coil Serial #</label>
+                <div class="input-with-scan">
+                    <input type="text" id="coil-serial" placeholder="Enter coil serial number">
+                    <button type="button" class="scan-button" onclick="startScan('coil-serial')">Scan</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="service-date">Date of Service *</label>
+                <input type="date" id="service-date">
+            </div>
+            <div class="form-group">
+                <label for="install-date">Install Date (optional)</label>
+                <input type="date" id="install-date">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 1: Contact Info (Contractor + Homeowner) -->
+    <div id="modal-data1" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Contact Information</div>
+                <button class="close-button" onclick="closeModal('data1')">Close</button>
+            </div>
+
+            <div class="field-section-header">Servicing Contractor</div>
+            <div class="form-group">
+                <label for="tech-name">Technician Name *</label>
+                <input type="text" id="tech-name" placeholder="Enter technician name">
+            </div>
+            <div class="form-group">
+                <label for="tech-email">Email *</label>
+                <input type="email" id="tech-email" placeholder="Enter email address">
+            </div>
+            <div class="form-group">
+                <label for="tech-mobile">Technician Mobile Number *</label>
+                <input type="tel" id="tech-mobile" placeholder="Enter mobile number">
+            </div>
+            <div class="form-group">
+                <label for="company-name">Company Name *</label>
+                <input type="text" id="company-name" placeholder="Enter company name">
+            </div>
+            <div class="form-group">
+                <label for="company-street">Street Address *</label>
+                <input type="text" id="company-street" placeholder="Enter street address">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="company-city">City *</label>
+                    <input type="text" id="company-city" placeholder="City">
+                </div>
+                <div class="form-group">
+                    <label for="company-state">State *</label>
+                    <input type="text" id="company-state" placeholder="State" maxlength="2">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="company-zip">Zip Code *</label>
+                <input type="text" id="company-zip" placeholder="Enter zip code" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label for="company-phone">Company Phone Number *</label>
+                <input type="tel" id="company-phone" placeholder="Enter company phone">
+            </div>
+
+            <div class="field-section-header">Homeowner Information</div>
+            <div class="form-group">
+                <label for="homeowner-name">Homeowner Name *</label>
+                <input type="text" id="homeowner-name" placeholder="Enter homeowner name">
+            </div>
+            <div class="form-group">
+                <button type="button" class="geolocate-button" onclick="geolocateAddress()">
+                    📍 Use Current Location for Address
+                </button>
+                <div id="geolocate-status" class="geolocate-status"></div>
+            </div>
+            <div class="form-group">
+                <label for="homeowner-street">Street Address *</label>
+                <input type="text" id="homeowner-street" placeholder="Enter street address">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="homeowner-city">City *</label>
+                    <input type="text" id="homeowner-city" placeholder="City">
+                </div>
+                <div class="form-group">
+                    <label for="homeowner-state">State *</label>
+                    <input type="text" id="homeowner-state" placeholder="State" maxlength="2">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="homeowner-zip">Zip Code *</label>
+                <input type="text" id="homeowner-zip" placeholder="Enter zip code" maxlength="10">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 2: Air & Airflow (Air Temps + Airflow Data) -->
+    <div id="modal-data2" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Air & Airflow Data</div>
+                <button class="close-button" onclick="closeModal('data2')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="airflow-direction">Air Handler/Furnace Air Flow Direction *</label>
+                <select id="airflow-direction">
+                    <option value="">Select airflow direction</option>
+                    <option value="upflow">Upflow</option>
+                    <option value="downflow">Downflow</option>
+                    <option value="horizontal-left">Horizontal Left</option>
+                    <option value="horizontal-right">Horizontal Right</option>
+                </select>
+            </div>
+
+            <div class="field-section-header">Air Temperatures</div>
+            <div class="form-group">
+                <label for="outdoor-temp">Outdoor Air Temperature (°F) *</label>
+                <input type="number" id="outdoor-temp" placeholder="Enter outdoor temperature" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="indoor-db">Indoor Dry Bulb Temperature (°F) *</label>
+                <input type="number" id="indoor-db" placeholder="Enter indoor dry bulb temp" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="indoor-wb">Indoor Wet Bulb Temperature (°F)</label>
+                <input type="number" id="indoor-wb" placeholder="Enter indoor wet bulb temp (optional)" step="0.1">
+            </div>
+
+            <div class="field-section-header">Airflow Measurement</div>
+            <div class="form-group">
+                <label for="airflow-test-method">Airflow Test Method *</label>
+                <select id="airflow-test-method">
+                    <option value="">Select test method</option>
+                    <option value="static">Static Pressure</option>
+                    <option value="temprise">Temperature Rise</option>
+                    <option value="flowhood">Flowhood</option>
+                </select>
+            </div>
+
+            <!-- Static Pressure Method Fields -->
+            <div id="static-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="supply-static">Supply Side Static Pressure (in. w.c.) *</label>
+                    <input type="number" id="supply-static" placeholder="Enter supply static pressure" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="return-static">Return Side Static Pressure (in. w.c.) *</label>
+                    <input type="number" id="return-static" placeholder="Enter return static pressure" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="total-static">Total External Static Pressure (in. w.c.)</label>
+                    <input type="text" id="total-static" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label for="supply-temp-static">Supply Temperature (°F) *</label>
+                    <input type="number" id="supply-temp-static" placeholder="Enter supply air temperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="return-temp-static">Return Temperature (°F) *</label>
+                    <input type="number" id="return-temp-static" placeholder="Enter return air temperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="calc-cfm-static">Calculated CFM (Static Pressure)</label>
+                    <input type="text" id="calc-cfm-static" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                </div>
+            </div>
+
+            <!-- Temperature Rise Method Fields -->
+            <div id="temprise-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="heating-voltage">Measured Heating Element Voltage (V)</label>
+                    <input type="number" id="heating-voltage" placeholder="Enter voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="heating-amperage">Measured Heating Element Amperage (A)</label>
+                    <input type="number" id="heating-amperage" placeholder="Enter amperage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="supply-temp-rise">Supply Temperature (°F) *</label>
+                    <input type="number" id="supply-temp-rise" placeholder="Enter supply air temperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="return-temp-rise">Return Temperature (°F) *</label>
+                    <input type="number" id="return-temp-rise" placeholder="Enter return air temperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="measured-temp-rise">Measured Temperature Rise (°F)</label>
+                    <input type="text" id="measured-temp-rise" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label for="elevation">Approximate Height Above Sea Level (ft)</label>
+                    <input type="number" id="elevation" placeholder="Enter elevation">
+                </div>
+                <div class="form-group">
+                    <label for="calc-cfm-temprise">Calculated CFM (Temp Rise)</label>
+                    <input type="text" id="calc-cfm-temprise" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                </div>
+            </div>
+
+            <!-- Flowhood Method Fields -->
+            <div id="flowhood-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="flowhood-method">Flowhood Test Method</label>
+                    <input type="text" id="flowhood-method" placeholder="Enter test method details">
+                </div>
+                <div class="form-group">
+                    <label for="total-supply-cfm">Total Supply CFM *</label>
+                    <input type="number" id="total-supply-cfm" placeholder="Enter total supply CFM">
+                </div>
+                <div class="form-group">
+                    <label for="total-return-cfm">Total Return CFM</label>
+                    <input type="number" id="total-return-cfm" placeholder="Enter total return CFM">
+                </div>
+                <div class="form-group">
+                    <label for="supply-temp-hood">Supply Temperature (°F)</label>
+                    <input type="number" id="supply-temp-hood" placeholder="Enter supply air temperature" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="return-temp-hood">Return Temperature (°F)</label>
+                    <input type="number" id="return-temp-hood" placeholder="Enter return air temperature" step="0.1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 3: Refrigerant Data (Refrigerant Data + Line Temps) -->
+    <div id="modal-data3" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Refrigerant Data</div>
+                <button class="close-button" onclick="closeModal('data3')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="refrigerant-type">Refrigerant Type *</label>
+                <select id="refrigerant-type">
+                    <option value="">Select refrigerant type</option>
+                    <option value="R-22">R-22</option>
+                    <option value="R-410A">R-410A</option>
+                    <option value="R-32">R-32</option>
+                    <option value="R-454B">R-454B</option>
+                    <option value="Other">Other (Manual Entry)</option>
+                </select>
+            </div>
+            <div class="form-group" id="other-refrigerant-group" style="display: none;">
+                <label for="refrigerant-other">Other Refrigerant Type *</label>
+                <input type="text" id="refrigerant-other" placeholder="Enter refrigerant type">
+            </div>
+
+            <div class="field-section-header">Liquid Line (High Side)</div>
+            <div class="form-group">
+                <label for="liquid-pressure">Gauge Pressure (psig) *</label>
+                <input type="number" id="liquid-pressure" placeholder="Enter liquid line pressure" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="liquid-temp">Physical Temperature (°F) *</label>
+                <input type="number" id="liquid-temp" placeholder="Enter liquid line temperature" step="0.1">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Saturation Temp (°F)</label>
+                    <input type="number" id="liquid-sat-temp" placeholder="Calculated" step="0.1" disabled style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>Subcooling (°F)</label>
+                    <input type="number" id="subcooling" placeholder="Calculated" step="0.1" disabled style="background-color: #f0f0f0;">
+                </div>
+            </div>
+
+            <div class="field-section-header">Vapor Line (Low Side)</div>
+            <div class="form-group">
+                <label for="vapor-pressure">Gauge Pressure (psig) *</label>
+                <input type="number" id="vapor-pressure" placeholder="Enter vapor line pressure" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="vapor-temp">Physical Temperature (°F) *</label>
+                <input type="number" id="vapor-temp" placeholder="Enter vapor line temperature" step="0.1">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Saturation Temp (°F)</label>
+                    <input type="number" id="vapor-sat-temp" placeholder="Calculated" step="0.1" disabled style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>Superheat (°F)</label>
+                    <input type="number" id="superheat" placeholder="Calculated" step="0.1" disabled style="background-color: #f0f0f0;">
+                </div>
+            </div>
+
+            <div class="field-section-header">Compressor Line Temperatures</div>
+            <div class="form-group">
+                <label for="comp-suction-temp">Suction Line Temperature (°F)</label>
+                <input type="number" id="comp-suction-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="comp-discharge-temp">Discharge Line Temperature (°F)</label>
+                <input type="number" id="comp-discharge-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+
+            <div class="field-section-header">Outdoor Unit Coil Temperatures</div>
+            <div class="form-group">
+                <label for="outdoor-inlet-temp">Inlet Line Temperature (°F)</label>
+                <input type="number" id="outdoor-inlet-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="outdoor-discharge-temp">Discharge Line Temperature (°F)</label>
+                <input type="number" id="outdoor-discharge-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+
+            <div class="field-section-header">Filter Drier Temperatures</div>
+            <div class="form-group">
+                <label for="drier-inlet-temp">Inlet Line Temperature (°F)</label>
+                <input type="number" id="drier-inlet-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="drier-discharge-temp">Discharge Line Temperature (°F)</label>
+                <input type="number" id="drier-discharge-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+
+            <div class="field-section-header">Indoor Unit Coil Temperatures</div>
+            <div class="form-group">
+                <label for="indoor-inlet-temp">Inlet Line Temperature (°F)</label>
+                <input type="number" id="indoor-inlet-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="indoor-discharge-temp">Discharge Line Temperature (°F)</label>
+                <input type="number" id="indoor-discharge-temp" placeholder="Enter temperature" step="0.1">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 4: Line Set Details -->
+    <div id="modal-data4" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Refrigerant Line Set Details</div>
+                <button class="close-button" onclick="closeModal('data4')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="lineset-length">Total Length (ft) *</label>
+                <input type="number" id="lineset-length" placeholder="Enter line set length">
+            </div>
+            <div class="form-group">
+                <label for="vapor-size">Vapor Line Size (in) *</label>
+                <input type="text" id="vapor-size" placeholder="Enter vapor line size">
+            </div>
+            <div class="form-group">
+                <label for="liquid-size">Liquid Line Size (in) *</label>
+                <input type="text" id="liquid-size" placeholder="Enter liquid line size">
+            </div>
+            <div class="form-group">
+                <label for="outdoor-position">Outdoor Unit Position Relative to Indoor Unit *</label>
+                <select id="outdoor-position">
+                    <option value="">Select position</option>
+                    <option value="above">Outdoor unit is ABOVE indoor unit</option>
+                    <option value="below">Outdoor unit is BELOW indoor unit</option>
+                    <option value="same">Same level (no vertical separation)</option>
+                </select>
+            </div>
+            <div class="form-group" id="vertical-separation-group" style="display: none;">
+                <label for="vertical-separation">Vertical Separation (ft) *</label>
+                <input type="number" id="vertical-separation" placeholder="Enter vertical separation" step="0.1">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 5: Electrical Data -->
+    <div id="modal-data5" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Electrical Data</div>
+                <button class="close-button" onclick="closeModal('data5')">Close</button>
+            </div>
+
+            <div class="field-section-header" style="margin-top: 0; padding-top: 0; border-top: none;">Control Voltage</div>
+            <div class="form-group">
+                <label for="control-voltage">Control Voltage (V) *</label>
+                <input type="number" id="control-voltage" placeholder="Enter control voltage" step="0.1">
+            </div>
+
+            <div class="field-section-header">Line Voltage</div>
+            <div class="form-group">
+                <label for="voltage-phase">System Voltage/Phase *</label>
+                <select id="voltage-phase">
+                    <option value="">Select voltage and phase</option>
+                    <option value="115-1ph">115V Single Phase</option>
+                    <option value="208-230-1ph">208-230V Single Phase</option>
+                    <option value="208-230-3ph">208-230V Three Phase</option>
+                    <option value="460-3ph">460V Three Phase</option>
+                </select>
+            </div>
+
+            <!-- 115V Single Phase Line Voltage Fields -->
+            <div id="electrical-115-1ph" style="display: none;">
+                <div class="form-group">
+                    <label for="supply-voltage-115">Supply Voltage L1-L2 (V) *</label>
+                    <input type="number" id="supply-voltage-115" placeholder="Enter supply voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l1-115">Voltage Neutral-L1 (V)</label>
+                    <input type="number" id="neutral-l1-115" placeholder="Enter neutral-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l2-115">Voltage Neutral-L2 (V)</label>
+                    <input type="number" id="neutral-l2-115" placeholder="Enter neutral-L2 voltage" step="0.1">
+                </div>
+            </div>
+
+            <!-- 208-230V Single Phase Line Voltage Fields -->
+            <div id="electrical-208-230-1ph" style="display: none;">
+                <div class="form-group">
+                    <label for="supply-voltage-230-1ph">Supply Voltage L1-L2 (V) *</label>
+                    <input type="number" id="supply-voltage-230-1ph" placeholder="Enter supply voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l1-230-1ph">Voltage Neutral-L1 (V)</label>
+                    <input type="number" id="neutral-l1-230-1ph" placeholder="Enter neutral-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l2-230-1ph">Voltage Neutral-L2 (V)</label>
+                    <input type="number" id="neutral-l2-230-1ph" placeholder="Enter neutral-L2 voltage" step="0.1">
+                </div>
+            </div>
+
+            <!-- 208-230V Three Phase Line Voltage Fields -->
+            <div id="electrical-208-230-3ph" style="display: none;">
+                <div class="form-group">
+                    <label for="voltage-l1l2-230-3ph">Voltage L1-L2 (V) *</label>
+                    <input type="number" id="voltage-l1l2-230-3ph" placeholder="Enter L1-L2 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="voltage-l2l3-230-3ph">Voltage L2-L3 (V) *</label>
+                    <input type="number" id="voltage-l2l3-230-3ph" placeholder="Enter L2-L3 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="voltage-l3l1-230-3ph">Voltage L3-L1 (V) *</label>
+                    <input type="number" id="voltage-l3l1-230-3ph" placeholder="Enter L3-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l1-230-3ph">Voltage Neutral-L1 (V)</label>
+                    <input type="number" id="neutral-l1-230-3ph" placeholder="Enter neutral-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l2-230-3ph">Voltage Neutral-L2 (V)</label>
+                    <input type="number" id="neutral-l2-230-3ph" placeholder="Enter neutral-L2 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l3-230-3ph">Voltage Neutral-L3 (V)</label>
+                    <input type="number" id="neutral-l3-230-3ph" placeholder="Enter neutral-L3 voltage" step="0.1">
+                </div>
+            </div>
+
+            <!-- 460V Three Phase Line Voltage Fields -->
+            <div id="electrical-460-3ph" style="display: none;">
+                <div class="form-group">
+                    <label for="voltage-l1l2-460-3ph">Voltage L1-L2 (V) *</label>
+                    <input type="number" id="voltage-l1l2-460-3ph" placeholder="Enter L1-L2 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="voltage-l2l3-460-3ph">Voltage L2-L3 (V) *</label>
+                    <input type="number" id="voltage-l2l3-460-3ph" placeholder="Enter L2-L3 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="voltage-l3l1-460-3ph">Voltage L3-L1 (V) *</label>
+                    <input type="number" id="voltage-l3l1-460-3ph" placeholder="Enter L3-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l1-460-3ph">Voltage Neutral-L1 (V)</label>
+                    <input type="number" id="neutral-l1-460-3ph" placeholder="Enter neutral-L1 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l2-460-3ph">Voltage Neutral-L2 (V)</label>
+                    <input type="number" id="neutral-l2-460-3ph" placeholder="Enter neutral-L2 voltage" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="neutral-l3-460-3ph">Voltage Neutral-L3 (V)</label>
+                    <input type="number" id="neutral-l3-460-3ph" placeholder="Enter neutral-L3 voltage" step="0.1">
+                </div>
+            </div>
+
+            <!-- Compressor Section (dynamic based on voltage/phase) -->
+            <div id="compressor-section" style="display: none;">
+                <div class="field-section-header" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">Compressor</div>
+
+                <!-- Single Phase Compressor (115V and 208-230V) -->
+                <div id="comp-single-phase" style="display: none;">
+                    <div class="form-group">
+                        <label for="comp-start-amps">Compressor Start (or X) Amps (A) *</label>
+                        <input type="number" id="comp-start-amps" placeholder="Enter start amps" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-run-amps">Compressor Run (or Y) Amps (A) *</label>
+                        <input type="number" id="comp-run-amps" placeholder="Enter run amps" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-common-amps">Compressor Common (or Z) Amps (A) *</label>
+                        <input type="number" id="comp-common-amps" placeholder="Enter common amps" step="0.1">
+                    </div>
+                </div>
+
+                <!-- Three Phase Compressor (208-230V 3ph and 460V 3ph) -->
+                <div id="comp-three-phase" style="display: none;">
+                    <div class="form-group">
+                        <label for="comp-l1-amps">Compressor L1 Amps (A) *</label>
+                        <input type="number" id="comp-l1-amps" placeholder="Enter L1 amps" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-l2-amps">Compressor L2 Amps (A) *</label>
+                        <input type="number" id="comp-l2-amps" placeholder="Enter L2 amps" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="comp-l3-amps">Compressor L3 Amps (A) *</label>
+                        <input type="number" id="comp-l3-amps" placeholder="Enter L3 amps" step="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condenser Fan Section (universal) -->
+            <div id="condenser-fan-section" style="display: none;">
+                <div class="field-section-header" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">Condenser Fan</div>
+                <div class="form-group">
+                    <label for="condenser-fan-amps">Condenser Fan Amps (A)</label>
+                    <input type="number" id="condenser-fan-amps" placeholder="Enter fan amps" step="0.1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 6: Problem & Actions -->
+    <div id="modal-data6" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Problem & Actions</div>
+                <button class="close-button" onclick="closeModal('data6')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="problem-summary">Problem Summary *</label>
+                <textarea id="problem-summary" placeholder="Describe the problem or issue" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="corrective-actions">Corrective Actions Taken</label>
+                <textarea id="corrective-actions" placeholder="Describe the corrective actions taken" rows="4"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 7: Accessories -->
+    <div id="modal-data7" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Accessories</div>
+                <button class="close-button" onclick="closeModal('data7')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label>Accessories Installed *</label>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-thermostat" style="width: auto; margin-right: 8px;">
+                        Thermostat
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-filter" style="width: auto; margin-right: 8px;">
+                        Air Filter
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-surge" style="width: auto; margin-right: 8px;">
+                        Surge Protector
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-pad" style="width: auto; margin-right: 8px;">
+                        Equipment Pad
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-disconnect" style="width: auto; margin-right: 8px;">
+                        Disconnect Box
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="acc-other">Other Accessories</label>
+                <textarea id="acc-other" placeholder="List any other accessories installed" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Data 8: Photos -->
+    <div id="modal-data8" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Photos</div>
+                <button class="close-button" onclick="closeModal('data8')">Close</button>
+            </div>
+
+            <div class="form-group">
+                <label for="photo-outdoor">Outdoor Unit Nameplate *</label>
+                <input type="file" id="photo-outdoor" accept="image/*" capture="environment">
+                <label style="display: block; margin-top: 10px; font-weight: normal;">
+                    <input type="checkbox" id="outdoor-photo-na" style="width: auto; margin-right: 8px;">
+                    Outdoor nameplate not accessible
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="photo-indoor">Indoor Unit Nameplate</label>
+                <input type="file" id="photo-indoor" accept="image/*" capture="environment">
+            </div>
+            <div class="form-group">
+                <label for="photo-additional">Additional Photos</label>
+                <input type="file" id="photo-additional" accept="image/*" capture="environment" multiple>
+                <small style="color: #666; display: block; margin-top: 5px;">You can select multiple photos</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data storage
+        let formData = {
+            startJSIS: {},
+            data1: {},
+            data2: {},
+            data3: {},
+            data4: {},
+            data5: {},
+            data6: {},
+            data7: {},
+            data8: {}
+        };
+
+        // Define required fields for each section
+        const requiredFields = {
+            startJSIS: ['outdoor-model', 'outdoor-serial', 'indoor-model', 'indoor-serial', 'service-date'],
+            data1: ['tech-name', 'tech-email', 'tech-mobile', 'company-name', 'company-street', 'company-city', 'company-state', 'company-zip', 'company-phone', 'homeowner-name', 'homeowner-street', 'homeowner-city', 'homeowner-state', 'homeowner-zip'],
+            data2: ['airflow-direction', 'outdoor-temp', 'indoor-db', 'airflow-test-method'], // Additional fields depend on test method
+            data3: ['refrigerant-type', 'liquid-pressure', 'liquid-temp', 'vapor-pressure', 'vapor-temp'], // Line temps are optional
+            data4: ['lineset-length', 'vapor-size', 'liquid-size', 'outdoor-position'], // vertical-separation required if not 'same'
+            data5: ['control-voltage', 'voltage-phase'], // Additional fields depend on voltage type
+            data6: ['problem-summary'],
+            data7: ['acc-thermostat', 'acc-filter', 'acc-surge', 'acc-pad', 'acc-disconnect'],
+            data8: [] // Photos are optional
+        };
+
+        // Define voltage/phase-specific required fields for data5 (Electrical)
+        const electricalVoltageFields = {
+            '115-1ph': ['supply-voltage-115', 'comp-start-amps', 'comp-run-amps', 'comp-common-amps'],
+            '208-230-1ph': ['supply-voltage-230-1ph', 'comp-start-amps', 'comp-run-amps', 'comp-common-amps'],
+            '208-230-3ph': ['voltage-l1l2-230-3ph', 'voltage-l2l3-230-3ph', 'voltage-l3l1-230-3ph', 'comp-l1-amps', 'comp-l2-amps', 'comp-l3-amps'],
+            '460-3ph': ['voltage-l1l2-460-3ph', 'voltage-l2l3-460-3ph', 'voltage-l3l1-460-3ph', 'comp-l1-amps', 'comp-l2-amps', 'comp-l3-amps']
+        };
+
+        // Define method-specific required fields for data2 (Air & Airflow)
+        const airflowMethodFields = {
+            'static': ['supply-static', 'return-static', 'supply-temp-static', 'return-temp-static'],
+            'temprise': ['supply-temp-rise', 'return-temp-rise'],
+            'flowhood': ['total-supply-cfm']
+        };
+
+        // Auto-save function - triggered on blur
+        function autoSave(sectionId, fieldId, value, isCheckbox = false, isFile = false) {
+            if (isCheckbox) {
+                formData[sectionId][fieldId] = value;
+            } else if (isFile) {
+                if (value && value.length > 0) {
+                    formData[sectionId][fieldId] = {
+                        hasFiles: true,
+                        count: value.length,
+                        names: Array.from(value).map(f => f.name)
+                    };
+                } else {
+                    formData[sectionId][fieldId] = { hasFiles: false, count: 0, names: [] };
+                }
+            } else {
+                formData[sectionId][fieldId] = value;
+            }
+
+            localStorage.setItem('jsisFormData', JSON.stringify(formData));
+            updateButtonStates();
+        }
+
+        // Load data from localStorage on page load
+        window.onload = function() {
+            const savedData = localStorage.getItem('jsisFormData');
+            if (savedData) {
+                formData = JSON.parse(savedData);
+                restoreFormData();
+            }
+
+            // Set default service date to today if not already set
+            const serviceDateField = document.getElementById('service-date');
+            if (serviceDateField && !serviceDateField.value) {
+                const today = new Date().toISOString().split('T')[0];
+                serviceDateField.value = today;
+                // Save the default value
+                if (!formData.startJSIS['service-date']) {
+                    formData.startJSIS['service-date'] = today;
+                    localStorage.setItem('jsisFormData', JSON.stringify(formData));
+                }
+            }
+
+            updateButtonStates();
+            attachAutoSaveListeners();
+        };
+
+        function attachAutoSaveListeners() {
+            // Attach blur listeners to all inputs, textareas, and selects
+            document.querySelectorAll('input, textarea, select').forEach(element => {
+                // Find which modal this element belongs to
+                const modal = element.closest('.modal');
+                if (!modal) return;
+
+                const modalId = modal.id.replace('modal-', '');
+
+                if (element.type === 'checkbox') {
+                    element.addEventListener('change', function() {
+                        autoSave(modalId, element.id, element.checked, true);
+                    });
+                } else if (element.type === 'file') {
+                    element.addEventListener('change', function() {
+                        autoSave(modalId, element.id, element.files, false, true);
+                    });
+                } else if (element.tagName === 'SELECT') {
+                    element.addEventListener('change', function() {
+                        autoSave(modalId, element.id, element.value);
+
+                        // Handle special dropdown triggers
+                        if (element.id === 'refrigerant-type') {
+                            updateRefrigerantFields();
+                        } else if (element.id === 'voltage-phase') {
+                            updateElectricalFields();
+                        } else if (element.id === 'airflow-test-method') {
+                            updateAirflowFields();
+                        } else if (element.id === 'outdoor-position') {
+                            updateVerticalSeparationRequired();
+                        }
+                    });
+                } else {
+                    element.addEventListener('blur', function() {
+                        autoSave(modalId, element.id, element.value);
+                    });
+                }
+            });
+
+            // Add decimal limiting to number fields
+            const decimalFields = document.querySelectorAll('input[type="number"][step="0.1"], input[type="number"][step="0.01"]');
+            decimalFields.forEach(field => {
+                field.addEventListener('blur', function(e) {
+                    let value = e.target.value;
+                    if (value && !isNaN(value)) {
+                        const step = e.target.step;
+                        const decimals = step === '0.01' ? 2 : 1;
+                        e.target.value = parseFloat(value).toFixed(decimals);
+                    }
+                });
+            });
+
+            // Add click-outside-to-close for all modals
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    // Only close if clicking the backdrop, not the modal content
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                        updateButtonStates();
+                    }
+                });
+            });
+        }
+
+        function updateRefrigerantFields() {
+            const refrigerantType = document.getElementById('refrigerant-type').value;
+            const otherGroup = document.getElementById('other-refrigerant-group');
+
+            // Show/hide other refrigerant input
+            if (refrigerantType === 'Other') {
+                otherGroup.style.display = 'block';
+                // Enable manual entry for calculated fields
+                setRefrigerantFieldsManual(true);
+            } else {
+                otherGroup.style.display = 'none';
+                // Disable manual entry, use auto-calculation
+                setRefrigerantFieldsManual(false);
+                // Recalculate if we have values
+                calculateRefrigerantValues();
+            }
+        }
+
+        function setRefrigerantFieldsManual(isManual) {
+            const calcFields = ['liquid-sat-temp', 'subcooling', 'vapor-sat-temp', 'superheat'];
+            calcFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.disabled = !isManual;
+                    field.style.backgroundColor = isManual ? '#fff' : '#f0f0f0';
+                    field.placeholder = isManual ? 'Enter value' : 'Calculated';
+                }
+            });
+        }
+
+        // PT Chart Data (Pressure in psig -> Temperature in °F)
+        // Data points for interpolation
+        const ptCharts = {
+            'R-22': [
+                { p: 0, t: -41 }, { p: 10, t: -20 }, { p: 20, t: -5 }, { p: 30, t: 7 },
+                { p: 40, t: 18 }, { p: 50, t: 27 }, { p: 60, t: 35 }, { p: 70, t: 42 },
+                { p: 80, t: 48 }, { p: 90, t: 54 }, { p: 100, t: 60 }, { p: 120, t: 70 },
+                { p: 140, t: 79 }, { p: 160, t: 87 }, { p: 180, t: 95 }, { p: 200, t: 101 },
+                { p: 225, t: 109 }, { p: 250, t: 116 }, { p: 275, t: 122 }, { p: 300, t: 128 },
+                { p: 350, t: 139 }, { p: 400, t: 149 }
+            ],
+            'R-410A': [
+                { p: 0, t: -60 }, { p: 20, t: -37 }, { p: 40, t: -19 }, { p: 60, t: -5 },
+                { p: 80, t: 8 }, { p: 100, t: 18 }, { p: 118, t: 25 }, { p: 130, t: 30 },
+                { p: 145, t: 35 }, { p: 160, t: 40 }, { p: 175, t: 44 }, { p: 190, t: 48 },
+                { p: 210, t: 53 }, { p: 230, t: 57 }, { p: 250, t: 61 }, { p: 275, t: 66 },
+                { p: 300, t: 71 }, { p: 330, t: 76 }, { p: 360, t: 81 }, { p: 390, t: 86 },
+                { p: 420, t: 90 }, { p: 450, t: 94 }, { p: 480, t: 98 }, { p: 520, t: 103 },
+                { p: 560, t: 108 }, { p: 600, t: 112 }, { p: 650, t: 117 }
+            ],
+            'R-32': [
+                { p: 0, t: -62 }, { p: 20, t: -40 }, { p: 40, t: -23 }, { p: 60, t: -9 },
+                { p: 80, t: 3 }, { p: 100, t: 13 }, { p: 120, t: 22 }, { p: 140, t: 30 },
+                { p: 160, t: 37 }, { p: 180, t: 44 }, { p: 200, t: 50 }, { p: 225, t: 57 },
+                { p: 250, t: 63 }, { p: 280, t: 70 }, { p: 310, t: 76 }, { p: 340, t: 82 },
+                { p: 375, t: 88 }, { p: 410, t: 94 }, { p: 450, t: 100 }, { p: 490, t: 105 },
+                { p: 530, t: 110 }, { p: 580, t: 116 }
+            ],
+            'R-454B': [
+                { p: 0, t: -55 }, { p: 20, t: -33 }, { p: 40, t: -16 }, { p: 60, t: -2 },
+                { p: 80, t: 10 }, { p: 100, t: 20 }, { p: 120, t: 29 }, { p: 140, t: 37 },
+                { p: 160, t: 44 }, { p: 180, t: 50 }, { p: 200, t: 56 }, { p: 225, t: 63 },
+                { p: 250, t: 69 }, { p: 280, t: 76 }, { p: 310, t: 82 }, { p: 340, t: 88 },
+                { p: 375, t: 94 }, { p: 410, t: 99 }, { p: 450, t: 105 }, { p: 490, t: 110 },
+                { p: 530, t: 115 }
+            ]
+        };
+
+        // Interpolate temperature from pressure using PT chart
+        function getSaturationTemp(refrigerant, pressure) {
+            const chart = ptCharts[refrigerant];
+            if (!chart || pressure === null || pressure === undefined || pressure === '') return null;
+
+            pressure = parseFloat(pressure);
+            if (isNaN(pressure)) return null;
+
+            // Find the two points to interpolate between
+            for (let i = 0; i < chart.length - 1; i++) {
+                if (pressure >= chart[i].p && pressure <= chart[i + 1].p) {
+                    // Linear interpolation
+                    const p1 = chart[i].p, t1 = chart[i].t;
+                    const p2 = chart[i + 1].p, t2 = chart[i + 1].t;
+                    const temp = t1 + (pressure - p1) * (t2 - t1) / (p2 - p1);
+                    return Math.round(temp * 10) / 10; // Round to 1 decimal
+                }
+            }
+
+            // If pressure is below or above chart range, extrapolate from nearest points
+            if (pressure < chart[0].p) {
+                const p1 = chart[0].p, t1 = chart[0].t;
+                const p2 = chart[1].p, t2 = chart[1].t;
+                const temp = t1 + (pressure - p1) * (t2 - t1) / (p2 - p1);
+                return Math.round(temp * 10) / 10;
+            }
+            if (pressure > chart[chart.length - 1].p) {
+                const p1 = chart[chart.length - 2].p, t1 = chart[chart.length - 2].t;
+                const p2 = chart[chart.length - 1].p, t2 = chart[chart.length - 1].t;
+                const temp = t1 + (pressure - p1) * (t2 - t1) / (p2 - p1);
+                return Math.round(temp * 10) / 10;
+            }
+
+            return null;
+        }
+
+        function calculateRefrigerantValues() {
+            const refrigerant = document.getElementById('refrigerant-type').value;
+
+            // Don't calculate for "Other" - that's manual entry
+            if (!refrigerant || refrigerant === 'Other') return;
+
+            const liquidPressure = document.getElementById('liquid-pressure').value;
+            const liquidTemp = document.getElementById('liquid-temp').value;
+            const vaporPressure = document.getElementById('vapor-pressure').value;
+            const vaporTemp = document.getElementById('vapor-temp').value;
+
+            // Calculate liquid line saturation temp and subcooling
+            const liquidSatTemp = getSaturationTemp(refrigerant, liquidPressure);
+            if (liquidSatTemp !== null) {
+                document.getElementById('liquid-sat-temp').value = liquidSatTemp;
+                autoSave('data3', 'liquid-sat-temp', liquidSatTemp);
+
+                if (liquidTemp !== '' && !isNaN(liquidTemp)) {
+                    const subcooling = Math.round((liquidSatTemp - parseFloat(liquidTemp)) * 10) / 10;
+                    document.getElementById('subcooling').value = subcooling;
+                    autoSave('data3', 'subcooling', subcooling);
+                }
+            }
+
+            // Calculate vapor line saturation temp and superheat
+            const vaporSatTemp = getSaturationTemp(refrigerant, vaporPressure);
+            if (vaporSatTemp !== null) {
+                document.getElementById('vapor-sat-temp').value = vaporSatTemp;
+                autoSave('data3', 'vapor-sat-temp', vaporSatTemp);
+
+                if (vaporTemp !== '' && !isNaN(vaporTemp)) {
+                    const superheat = Math.round((parseFloat(vaporTemp) - vaporSatTemp) * 10) / 10;
+                    document.getElementById('superheat').value = superheat;
+                    autoSave('data3', 'superheat', superheat);
+                }
+            }
+        }
+
+        // Attach refrigerant calculation listeners
+        function attachRefrigerantCalculationListeners() {
+            const triggerFields = ['refrigerant-type', 'liquid-pressure', 'liquid-temp', 'vapor-pressure', 'vapor-temp'];
+            triggerFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('change', calculateRefrigerantValues);
+                    field.addEventListener('blur', calculateRefrigerantValues);
+                }
+            });
+        }
+
+        function updateElectricalFields() {
+            const voltageType = document.getElementById('voltage-phase').value;
+
+            // Hide all line voltage field groups
+            document.getElementById('electrical-115-1ph').style.display = 'none';
+            document.getElementById('electrical-208-230-1ph').style.display = 'none';
+            document.getElementById('electrical-208-230-3ph').style.display = 'none';
+            document.getElementById('electrical-460-3ph').style.display = 'none';
+
+            // Hide all compressor field groups
+            document.getElementById('comp-single-phase').style.display = 'none';
+            document.getElementById('comp-three-phase').style.display = 'none';
+
+            // Hide sections if no voltage selected
+            if (!voltageType) {
+                document.getElementById('compressor-section').style.display = 'none';
+                document.getElementById('condenser-fan-section').style.display = 'none';
+                return;
+            }
+
+            // Show compressor and condenser fan sections
+            document.getElementById('compressor-section').style.display = 'block';
+            document.getElementById('condenser-fan-section').style.display = 'block';
+
+            // Show fields for selected voltage/phase
+            if (voltageType === '115-1ph') {
+                document.getElementById('electrical-115-1ph').style.display = 'block';
+                document.getElementById('comp-single-phase').style.display = 'block';
+            } else if (voltageType === '208-230-1ph') {
+                document.getElementById('electrical-208-230-1ph').style.display = 'block';
+                document.getElementById('comp-single-phase').style.display = 'block';
+            } else if (voltageType === '208-230-3ph') {
+                document.getElementById('electrical-208-230-3ph').style.display = 'block';
+                document.getElementById('comp-three-phase').style.display = 'block';
+            } else if (voltageType === '460-3ph') {
+                document.getElementById('electrical-460-3ph').style.display = 'block';
+                document.getElementById('comp-three-phase').style.display = 'block';
+            }
+        }
+
+        function updateAirflowFields() {
+            const method = document.getElementById('airflow-test-method').value;
+
+            // Hide all field groups
+            document.getElementById('static-fields').style.display = 'none';
+            document.getElementById('temprise-fields').style.display = 'none';
+            document.getElementById('flowhood-fields').style.display = 'none';
+
+            // Show fields for selected method
+            if (method === 'static') {
+                document.getElementById('static-fields').style.display = 'block';
+            } else if (method === 'temprise') {
+                document.getElementById('temprise-fields').style.display = 'block';
+            } else if (method === 'flowhood') {
+                document.getElementById('flowhood-fields').style.display = 'block';
+            }
+        }
+
+        function updateVerticalSeparationRequired() {
+            const position = document.getElementById('outdoor-position').value;
+            const fieldGroup = document.getElementById('vertical-separation-group');
+            if (fieldGroup) {
+                // Show field if above or below, hide if same level or not selected
+                fieldGroup.style.display = (position === 'above' || position === 'below') ? 'block' : 'none';
+            }
+        }
+
+        function restoreFormData() {
+            // Restore all saved data
+            Object.keys(formData).forEach(sectionId => {
+                const sectionData = formData[sectionId];
+                Object.keys(sectionData).forEach(fieldId => {
+                    const element = document.getElementById(fieldId);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = sectionData[fieldId];
+                        } else if (element.type === 'file') {
+                            // Can't restore file inputs for security reasons
+                        } else {
+                            element.value = sectionData[fieldId];
+                        }
+                    }
+                });
+            });
+
+            // Restore conditional field displays
+            if (formData.data3 && formData.data3['refrigerant-type']) {
+                if (formData.data3['refrigerant-type'] === 'Other') {
+                    document.getElementById('other-refrigerant-group').style.display = 'block';
+                    setRefrigerantFieldsManual(true);
+                } else {
+                    // Recalculate values for known refrigerants
+                    setRefrigerantFieldsManual(false);
+                    calculateRefrigerantValues();
+                }
+            }
+
+            if (formData.data5 && formData.data5['voltage-phase']) {
+                updateElectricalFields();
+            }
+
+            if (formData.data2 && formData.data2['airflow-test-method']) {
+                updateAirflowFields();
+            }
+
+            if (formData.data4 && formData.data4['outdoor-position']) {
+                updateVerticalSeparationRequired();
+            }
+        }
+
+        function openModal(id) {
+            const button = document.getElementById(id);
+            if (button.classList.contains('disabled')) {
+                return;
+            }
+            document.getElementById('modal-' + id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.remove('active');
+            updateButtonStates();
+        }
+
+        function openInstructionsModal() {
+            document.getElementById('modal-instructions').classList.add('active');
+        }
+
+        function closeInstructionsModal() {
+            document.getElementById('modal-instructions').classList.remove('active');
+        }
+
+        function updateButtonStates() {
+            // Check completion status for each section
+            const statuses = {};
+
+            Object.keys(requiredFields).forEach(sectionId => {
+                const required = requiredFields[sectionId];
+                const sectionData = formData[sectionId] || {};
+
+                // Special handling for data8 (Photos) - outdoor nameplate required unless bypass checked
+                if (sectionId === 'data8') {
+                    const outdoorPhoto = sectionData['photo-outdoor'];
+                    const hasOutdoorPhoto = outdoorPhoto && typeof outdoorPhoto === 'object' && outdoorPhoto.hasFiles && outdoorPhoto.count > 0;
+                    const bypassChecked = sectionData['outdoor-photo-na'] === true;
+
+                    // Check if any other photos exist (for partial status)
+                    const hasAnyPhotos = Object.keys(sectionData).some(fieldId => {
+                        if (fieldId === 'outdoor-photo-na') return false;
+                        const value = sectionData[fieldId];
+                        return value && typeof value === 'object' && value.hasFiles && value.count > 0;
+                    });
+
+                    if (hasOutdoorPhoto || bypassChecked) {
+                        statuses[sectionId] = 'complete';
+                    } else if (hasAnyPhotos) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                    return;
+                }
+
+                // If section has no required fields, it's automatically complete
+                if (required.length === 0) {
+                    statuses[sectionId] = 'complete';
+                    return;
+                }
+
+                // Special handling for data5 (Electrical) - check voltage/phase-specific fields
+                if (sectionId === 'data5') {
+                    const voltageType = sectionData['voltage-phase'];
+                    const controlVoltage = sectionData['control-voltage'];
+
+                    // Base required fields
+                    const baseRequired = ['control-voltage', 'voltage-phase'];
+
+                    if (!voltageType) {
+                        // Check if control voltage is filled
+                        if (controlVoltage !== undefined && controlVoltage !== null && controlVoltage !== '') {
+                            statuses[sectionId] = 'partial';
+                        } else {
+                            statuses[sectionId] = 'empty';
+                        }
+                        return;
+                    }
+
+                    const voltageFields = electricalVoltageFields[voltageType] || [];
+                    const allFields = [...baseRequired, ...voltageFields];
+
+                    let filledCount = 0;
+                    allFields.forEach(fieldId => {
+                        const value = sectionData[fieldId];
+                        if (value !== undefined && value !== null && value !== '') {
+                            filledCount++;
+                        }
+                    });
+
+                    if (filledCount === allFields.length) {
+                        statuses[sectionId] = 'complete';
+                    } else if (filledCount > 0) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                    return;
+                }
+
+                // Special handling for data2 (Air & Airflow) - check method-specific fields
+                if (sectionId === 'data2') {
+                    const testMethod = sectionData['airflow-test-method'];
+
+                    // Base required fields (airflow direction + air temps)
+                    const baseRequired = ['airflow-direction', 'outdoor-temp', 'indoor-db', 'airflow-test-method'];
+
+                    if (!testMethod) {
+                        // Check if any base fields are filled
+                        let filledCount = 0;
+                        baseRequired.forEach(fieldId => {
+                            const value = sectionData[fieldId];
+                            if (value !== undefined && value !== null && value !== '') {
+                                filledCount++;
+                            }
+                        });
+
+                        if (filledCount === 0) {
+                            statuses[sectionId] = 'empty';
+                        } else {
+                            statuses[sectionId] = 'partial';
+                        }
+                        return;
+                    }
+
+                    const methodFields = airflowMethodFields[testMethod] || [];
+                    const allFields = [...baseRequired, ...methodFields];
+
+                    let filledCount = 0;
+                    allFields.forEach(fieldId => {
+                        const value = sectionData[fieldId];
+                        if (value !== undefined && value !== null && value !== '') {
+                            filledCount++;
+                        }
+                    });
+
+                    if (filledCount === allFields.length) {
+                        statuses[sectionId] = 'complete';
+                    } else if (filledCount > 0) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                    return;
+                }
+
+                // Special handling for data4 (Line Set Details) - vertical separation required if not 'same'
+                if (sectionId === 'data4') {
+                    const outdoorPosition = sectionData['outdoor-position'];
+                    const baseRequired = ['lineset-length', 'vapor-size', 'liquid-size', 'outdoor-position'];
+
+                    // Add vertical-separation as required if position is 'above' or 'below'
+                    const allFields = [...baseRequired];
+                    if (outdoorPosition && outdoorPosition !== 'same') {
+                        allFields.push('vertical-separation');
+                    }
+
+                    let filledCount = 0;
+                    allFields.forEach(fieldId => {
+                        const value = sectionData[fieldId];
+                        if (value !== undefined && value !== null && value !== '') {
+                            filledCount++;
+                        }
+                    });
+
+                    if (filledCount === allFields.length) {
+                        statuses[sectionId] = 'complete';
+                    } else if (filledCount > 0) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                    return;
+                }
+
+                let filledCount = 0;
+
+                required.forEach(fieldId => {
+                    const value = sectionData[fieldId];
+                    if (value !== undefined && value !== null && value !== '') {
+                        if (typeof value === 'object' && value.hasFiles !== undefined) {
+                            if (value.hasFiles) filledCount++;
+                        } else if (typeof value === 'boolean') {
+                            if (sectionId === 'data7') {
+                                // For accessories, don't count individual checkboxes
+                            } else if (value) {
+                                filledCount++;
+                            }
+                        } else {
+                            filledCount++;
+                        }
+                    }
+                });
+
+                // Special handling for data3 - check if "Other" refrigerant requires manual entry
+                if (sectionId === 'data3') {
+                    const refrigerantType = sectionData['refrigerant-type'];
+                    const refrigerantOther = sectionData['refrigerant-other'];
+
+                    if (refrigerantType === 'Other') {
+                        if (!refrigerantOther || refrigerantOther.trim() === '') {
+                            filledCount = Math.max(0, filledCount - 1);
+                        }
+                    }
+                }
+
+                // Special handling for data7 - at least one accessory checkbox
+                if (sectionId === 'data7') {
+                    const hasAccessory = required.some(fieldId => sectionData[fieldId] === true);
+                    if (hasAccessory) {
+                        statuses[sectionId] = 'complete';
+                    } else {
+                        statuses[sectionId] = filledCount > 0 ? 'partial' : 'empty';
+                    }
+                } else {
+                    if (filledCount === required.length) {
+                        statuses[sectionId] = 'complete';
+                    } else if (filledCount > 0) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                }
+            });
+
+            // Update Start JSIS button
+            const startButton = document.getElementById('startJSIS');
+            startButton.className = 'data-button ' + statuses.startJSIS;
+
+            // Check if Start JSIS is complete to enable other buttons
+            const isStartComplete = statuses.startJSIS === 'complete';
+
+            // Update Data 1-8 buttons
+            for (let i = 1; i <= 8; i++) {
+                const key = 'data' + i;
+                const button = document.getElementById(key);
+
+                if (isStartComplete) {
+                    button.className = 'data-button ' + (statuses[key] || 'empty');
+                } else {
+                    button.className = 'data-button disabled';
+                }
+            }
+
+            // Update submit button - all sections including photos must be complete
+            const submitButton = document.getElementById('submitButton');
+            const allComplete = isStartComplete &&
+                ['data1', 'data2', 'data3', 'data4', 'data5', 'data6', 'data7', 'data8']
+                    .every(key => statuses[key] === 'complete');
+
+            if (allComplete) {
+                submitButton.className = 'submit-button data-button complete';
+            } else {
+                submitButton.className = 'submit-button data-button disabled';
+            }
+        }
+
+        function submitForm() {
+            const submitButton = document.getElementById('submitButton');
+            if (submitButton.classList.contains('disabled')) {
+                return;
+            }
+
+            // Prepare submission data
+            const submissionData = {
+                timestamp: new Date().toISOString(),
+                ...formData
+            };
+
+            console.log('Form submitted:', submissionData);
+            alert('Form submitted successfully!\n\nData logged to console.\n\nIn production, this would:\n- Send data to database\n- Trigger automated actions\n- Send email notifications');
+
+            if (confirm('Clear form data?')) {
+                clearFormData();
+            }
+        }
+
+        function clearForm() {
+            if (confirm('ARE YOU SURE?\n\nThis will clear all entered data and cannot be undone.')) {
+                clearFormData();
+            }
+        }
+
+        function clearFormData() {
+            localStorage.removeItem('jsisFormData');
+            location.reload();
+        }
+
+        // Barcode Scanner functionality
+        let scannerStream = null;
+        let scannerTargetField = null;
+        let barcodeDetector = null;
+        let scanningInterval = null;
+
+        async function startScan(targetFieldId) {
+            scannerTargetField = targetFieldId;
+            const scannerModal = document.getElementById('modal-scanner');
+            const video = document.getElementById('scanner-video');
+            const status = document.getElementById('scanner-status');
+
+            scannerModal.classList.add('active');
+            status.className = 'scanner-status';
+            status.textContent = 'Initializing camera...';
+
+            // Check for BarcodeDetector support
+            if ('BarcodeDetector' in window) {
+                try {
+                    barcodeDetector = new BarcodeDetector({
+                        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'upc_a', 'upc_e', 'codabar', 'itf']
+                    });
+                } catch (e) {
+                    console.log('BarcodeDetector error:', e);
+                }
+            }
+
+            try {
+                // Request camera access
+                scannerStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+
+                video.srcObject = scannerStream;
+                await video.play();
+
+                if (barcodeDetector) {
+                    status.textContent = 'Point camera at barcode...';
+                    // Start scanning
+                    scanningInterval = setInterval(() => detectBarcode(video), 250);
+                } else {
+                    status.className = 'scanner-status error';
+                    status.innerHTML = 'Barcode detection not supported in this browser.<br><small>Try Chrome on Android or Safari on iOS.</small>';
+                }
+            } catch (err) {
+                console.error('Camera error:', err);
+                status.className = 'scanner-status error';
+                if (err.name === 'NotAllowedError') {
+                    status.textContent = 'Camera access denied. Please allow camera access and try again.';
+                } else if (err.name === 'NotFoundError') {
+                    status.textContent = 'No camera found on this device.';
+                } else {
+                    status.textContent = 'Error accessing camera: ' + err.message;
+                }
+            }
+        }
+
+        async function detectBarcode(video) {
+            if (!barcodeDetector || !video.videoWidth) return;
+
+            try {
+                const barcodes = await barcodeDetector.detect(video);
+                if (barcodes.length > 0) {
+                    const barcode = barcodes[0];
+                    const status = document.getElementById('scanner-status');
+                    status.className = 'scanner-status success';
+                    status.textContent = 'Barcode detected: ' + barcode.rawValue;
+
+                    // Fill the target field
+                    const targetField = document.getElementById(scannerTargetField);
+                    if (targetField) {
+                        targetField.value = barcode.rawValue;
+                        // Trigger auto-save
+                        autoSave('startJSIS', scannerTargetField, barcode.rawValue);
+                    }
+
+                    // Close scanner after short delay
+                    setTimeout(() => stopScan(), 500);
+                }
+            } catch (err) {
+                console.error('Detection error:', err);
+            }
+        }
+
+        function stopScan() {
+            // Stop scanning interval
+            if (scanningInterval) {
+                clearInterval(scanningInterval);
+                scanningInterval = null;
+            }
+
+            // Stop camera stream
+            if (scannerStream) {
+                scannerStream.getTracks().forEach(track => track.stop());
+                scannerStream = null;
+            }
+
+            // Clear video
+            const video = document.getElementById('scanner-video');
+            video.srcObject = null;
+
+            // Close modal
+            document.getElementById('modal-scanner').classList.remove('active');
+            scannerTargetField = null;
+        }
+
+        // Geolocation for homeowner address
+        async function geolocateAddress() {
+            const status = document.getElementById('geolocate-status');
+            const button = document.querySelector('.geolocate-button');
+
+            if (!navigator.geolocation) {
+                status.className = 'geolocate-status error';
+                status.textContent = 'Geolocation is not supported by this browser.';
+                return;
+            }
+
+            button.disabled = true;
+            status.className = 'geolocate-status';
+            status.textContent = 'Getting location...';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    status.textContent = 'Looking up address...';
+
+                    try {
+                        // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key)
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+                            { headers: { 'User-Agent': 'eJSIS-Form/1.0' } }
+                        );
+
+                        if (!response.ok) throw new Error('Geocoding failed');
+
+                        const data = await response.json();
+                        const addr = data.address;
+
+                        // Build street address
+                        let street = '';
+                        if (addr.house_number) street += addr.house_number + ' ';
+                        if (addr.road) street += addr.road;
+
+                        // Fill in the fields
+                        if (street) {
+                            document.getElementById('homeowner-street').value = street.trim();
+                            autoSave('data1', 'homeowner-street', street.trim());
+                        }
+                        if (addr.city || addr.town || addr.village) {
+                            const city = addr.city || addr.town || addr.village;
+                            document.getElementById('homeowner-city').value = city;
+                            autoSave('data1', 'homeowner-city', city);
+                        }
+                        if (addr.state) {
+                            // Try to get state abbreviation (US only)
+                            const stateAbbr = getStateAbbreviation(addr.state) || addr.state.substring(0, 2).toUpperCase();
+                            document.getElementById('homeowner-state').value = stateAbbr;
+                            autoSave('data1', 'homeowner-state', stateAbbr);
+                        }
+                        if (addr.postcode) {
+                            document.getElementById('homeowner-zip').value = addr.postcode;
+                            autoSave('data1', 'homeowner-zip', addr.postcode);
+                        }
+
+                        status.className = 'geolocate-status success';
+                        status.textContent = 'Address filled! Please verify and correct if needed.';
+                        updateButtonStates();
+
+                    } catch (err) {
+                        console.error('Geocoding error:', err);
+                        status.className = 'geolocate-status error';
+                        status.textContent = 'Could not look up address. Please enter manually.';
+                    }
+
+                    button.disabled = false;
+                },
+                (error) => {
+                    button.disabled = false;
+                    status.className = 'geolocate-status error';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            status.textContent = 'Location access denied. Please allow location access.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            status.textContent = 'Location unavailable. Please enter address manually.';
+                            break;
+                        case error.TIMEOUT:
+                            status.textContent = 'Location request timed out. Please try again.';
+                            break;
+                        default:
+                            status.textContent = 'Could not get location. Please enter address manually.';
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // US State abbreviations lookup
+        function getStateAbbreviation(stateName) {
+            const states = {
+                'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+                'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+                'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+                'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+                'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+                'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+                'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+                'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+                'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+                'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
+            };
+            return states[stateName] || null;
+        }
+
+        // Persistent technician data (survives form clear)
+        const technicianFields = ['tech-name', 'tech-email', 'tech-mobile', 'company-name', 'company-street', 'company-city', 'company-state', 'company-zip', 'company-phone'];
+
+        function saveTechnicianData() {
+            const techData = {};
+            technicianFields.forEach(fieldId => {
+                const element = document.getElementById(fieldId);
+                if (element && element.value) {
+                    techData[fieldId] = element.value;
+                }
+            });
+            localStorage.setItem('jsisTechnicianData', JSON.stringify(techData));
+        }
+
+        function loadTechnicianData() {
+            const savedTechData = localStorage.getItem('jsisTechnicianData');
+            if (savedTechData) {
+                const techData = JSON.parse(savedTechData);
+                technicianFields.forEach(fieldId => {
+                    const element = document.getElementById(fieldId);
+                    if (element && techData[fieldId] && !element.value) {
+                        element.value = techData[fieldId];
+                        // Also save to form data
+                        formData.data1[fieldId] = techData[fieldId];
+                    }
+                });
+            }
+        }
+
+        // Override attachAutoSaveListeners to also save technician data and add refrigerant calculations
+        const originalAttachAutoSaveListeners = attachAutoSaveListeners;
+        attachAutoSaveListeners = function() {
+            originalAttachAutoSaveListeners();
+
+            // Add extra listener for technician fields to persist them
+            technicianFields.forEach(fieldId => {
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    element.addEventListener('blur', saveTechnicianData);
+                }
+            });
+
+            // Add refrigerant calculation listeners
+            attachRefrigerantCalculationListeners();
+        };
+
+        // Load technician data on page load (add to existing onload)
+        const originalOnload = window.onload;
+        window.onload = function() {
+            originalOnload();
+            loadTechnicianData();
+            // Update button states again after loading tech data
+            localStorage.setItem('jsisFormData', JSON.stringify(formData));
+            updateButtonStates();
+        };
+    </script>
+</body>
+</html>
