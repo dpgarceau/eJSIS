@@ -28,16 +28,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .logo-placeholder {
-            width: 150px;
-            height: 60px;
-            background-color: #ddd;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            color: #666;
-            font-size: 14px;
+        .logo-container img {
+            max-width: 180px;
+            max-height: 50px;
+            width: auto;
+            height: auto;
         }
 
         .button-container {
@@ -416,7 +411,7 @@
 </head>
 <body>
     <div class="logo-container">
-        <div class="logo-placeholder">LOGO</div>
+        <img src="assets/ejsis_logo.png" alt="eJSIS Logo">
     </div>
 
     <button class="instructions-button" onclick="openInstructionsModal()">
@@ -2252,23 +2247,116 @@
             }
         }
 
-        function submitForm() {
+        // API Configuration - relative path works on any domain
+        const API_BASE_URL = 'api';
+
+        async function uploadPhoto(file, recordId, photoType) {
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('record_id', recordId);
+            formData.append('photo_type', photoType);
+
+            const response = await fetch(`${API_BASE_URL}/upload_photo.php`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Upload failed');
+            }
+
+            return await response.json();
+        }
+
+        async function submitForm() {
             const submitButton = document.getElementById('submitButton');
             if (submitButton.classList.contains('disabled')) {
                 return;
             }
 
-            // Prepare submission data
-            const submissionData = {
-                timestamp: new Date().toISOString(),
-                ...formData
-            };
+            // Disable button and show progress
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
 
-            console.log('Form submitted:', submissionData);
-            alert('Form submitted successfully!\n\nData logged to console.\n\nIn production, this would:\n- Send data to database\n- Trigger automated actions\n- Send email notifications');
+            try {
+                // Generate a temporary record ID for photo uploads
+                const tempRecordId = 'jsis_' + Date.now();
 
-            if (confirm('Clear form data?')) {
-                clearFormData();
+                // Get photo files
+                const outdoorPhotoInput = document.getElementById('photo-outdoor');
+                const indoorPhotoInput = document.getElementById('photo-indoor');
+                const additionalPhotosInput = document.getElementById('photo-additional');
+
+                const photoFilenames = {
+                    'photo-outdoor': null,
+                    'photo-indoor': null,
+                    'photo-additional': []
+                };
+
+                // Upload outdoor photo
+                if (outdoorPhotoInput.files.length > 0) {
+                    submitButton.textContent = 'Uploading outdoor photo...';
+                    const result = await uploadPhoto(outdoorPhotoInput.files[0], tempRecordId, 'outdoor');
+                    photoFilenames['photo-outdoor'] = result.filename;
+                }
+
+                // Upload indoor photo
+                if (indoorPhotoInput.files.length > 0) {
+                    submitButton.textContent = 'Uploading indoor photo...';
+                    const result = await uploadPhoto(indoorPhotoInput.files[0], tempRecordId, 'indoor');
+                    photoFilenames['photo-indoor'] = result.filename;
+                }
+
+                // Upload additional photos
+                if (additionalPhotosInput.files.length > 0) {
+                    for (let i = 0; i < additionalPhotosInput.files.length; i++) {
+                        submitButton.textContent = `Uploading additional photo ${i + 1}...`;
+                        const result = await uploadPhoto(additionalPhotosInput.files[i], tempRecordId, 'additional');
+                        photoFilenames['photo-additional'].push(result.filename);
+                    }
+                }
+
+                // Prepare submission data with photo filenames
+                const submissionData = { ...formData };
+
+                // Update data8 with photo filenames
+                if (!submissionData.data8) {
+                    submissionData.data8 = {};
+                }
+                submissionData.data8['photo-outdoor'] = photoFilenames['photo-outdoor'];
+                submissionData.data8['photo-indoor'] = photoFilenames['photo-indoor'];
+                submissionData.data8['photo-additional'] = JSON.stringify(photoFilenames['photo-additional']);
+
+                // Submit form data
+                submitButton.textContent = 'Saving record...';
+
+                const response = await fetch(`${API_BASE_URL}/submit.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(submissionData)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Submission failed');
+                }
+
+                // Success
+                alert(`JSIS submitted successfully!\n\nRecord ID: ${result.record_id}`);
+
+                if (confirm('Clear form data and start new JSIS?')) {
+                    clearFormData();
+                }
+
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('Error submitting form:\n\n' + error.message);
+                submitButton.textContent = 'Submit All Data';
+                submitButton.disabled = false;
             }
         }
 

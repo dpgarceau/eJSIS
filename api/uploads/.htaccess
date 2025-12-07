@@ -1,0 +1,4 @@
+# Deny all direct access to uploaded files
+# Files must be served through get_photo.php
+
+Deny from all

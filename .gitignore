@@ -1,1 +1,8 @@
 docs_private/
+
+# Database credentials - keep local
+api/jsis_dbconfig.php
+
+# Uploaded photos
+api/uploads/*
+!api/uploads/.htaccess
