@@ -851,6 +851,14 @@
                 <label for="refrigerant-other">Other Refrigerant Type *</label>
                 <input type="text" id="refrigerant-other" placeholder="Enter refrigerant type">
             </div>
+            <div class="form-group" id="heatpump-mode-group" style="display: none;">
+                <label for="heatpump-test-mode">Test Mode *</label>
+                <select id="heatpump-test-mode">
+                    <option value="">-- Select Test Mode --</option>
+                    <option value="cooling">Cooling Mode</option>
+                    <option value="heating">Heating Mode</option>
+                </select>
+            </div>
 
             <div class="field-section-header">Liquid Line (High Side)</div>
             <div class="form-group">
@@ -1891,6 +1899,7 @@
             const jsisType = document.getElementById('jsis-type').value;
             const equipmentFields = document.getElementById('jsis-equipment-fields');
             const gasFurnacePlaceholder = document.getElementById('jsis-gasfurnace-placeholder');
+            const heatpumpModeGroup = document.getElementById('heatpump-mode-group');
 
             if (jsisType === 'gasfurnace') {
                 equipmentFields.style.display = 'none';
@@ -1902,6 +1911,11 @@
                 // No selection - hide both
                 equipmentFields.style.display = 'none';
                 gasFurnacePlaceholder.style.display = 'none';
+            }
+
+            // Show/hide heat pump test mode field in refrigerant data
+            if (heatpumpModeGroup) {
+                heatpumpModeGroup.style.display = (jsisType === 'heatpump') ? 'block' : 'none';
             }
 
             // Save the selection to formData
@@ -2163,13 +2177,26 @@
                 });
 
                 // Special handling for data3 - check if "Other" refrigerant requires manual entry
+                // and if heat pump requires test mode selection
                 if (sectionId === 'data3') {
                     const refrigerantType = sectionData['refrigerant-type'];
                     const refrigerantOther = sectionData['refrigerant-other'];
+                    const jsisType = formData.startJSIS ? formData.startJSIS['jsis-type'] : '';
+                    const heatpumpTestMode = sectionData['heatpump-test-mode'];
 
                     if (refrigerantType === 'Other') {
                         if (!refrigerantOther || refrigerantOther.trim() === '') {
                             filledCount = Math.max(0, filledCount - 1);
+                        }
+                    }
+
+                    // For heat pump, test mode is required
+                    if (jsisType === 'heatpump') {
+                        if (!heatpumpTestMode || heatpumpTestMode === '') {
+                            // Prevent complete status if test mode not selected
+                            if (filledCount === required.length) {
+                                filledCount = required.length - 1;
+                            }
                         }
                     }
                 }

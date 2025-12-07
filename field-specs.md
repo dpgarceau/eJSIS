@@ -102,6 +102,9 @@ Detailed specifications for all data fields in the JSIS form.
 |-------|-----|------|----------|---------|
 | Refrigerant Type | refrigerant-type | select | Yes | R-22, R-410A, R-32, R-454B, Other |
 | Other Type | refrigerant-other | text | Conditional | If "Other" selected |
+| Test Mode | heatpump-test-mode | select | Conditional | Test Data in Cooling Mode, Test Data in Heating Mode |
+
+*Test Mode only appears and is required when JSIS Type is "Heat Pump System"*
 
 ### Liquid Line (High Side)
 
