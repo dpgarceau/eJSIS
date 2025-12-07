@@ -740,8 +740,12 @@
                     <input type="number" id="return-temp-static" placeholder="Enter return temp at indoor unit plenum" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-static">Supply Temperature at Plenum (°F) *</label>
-                    <input type="number" id="supply-temp-static" placeholder="Enter supply temp at indoor unit plenum" step="0.1">
+                    <label for="supply-temp-static">Supply Dry Bulb Temp at Plenum (°F) *</label>
+                    <input type="number" id="supply-temp-static" placeholder="Enter supply dry bulb temp" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="supply-wb-static">Supply Wet Bulb Temp at Plenum (°F)</label>
+                    <input type="number" id="supply-wb-static" placeholder="Enter supply wet bulb temp" step="0.1">
                 </div>
                 <div class="form-group">
                     <label for="cfm-static">CFM</label>
@@ -764,8 +768,12 @@
                     <input type="number" id="return-temp-rise" placeholder="Enter return temp at indoor unit plenum" step="0.1" oninput="calculateTempRise(); calculateTempRiseCFM()">
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-rise">Supply Temperature at Plenum (°F) *</label>
-                    <input type="number" id="supply-temp-rise" placeholder="Enter supply temp at indoor unit plenum" step="0.1" oninput="calculateTempRise(); calculateTempRiseCFM()">
+                    <label for="supply-temp-rise">Supply Dry Bulb Temp at Plenum (°F) *</label>
+                    <input type="number" id="supply-temp-rise" placeholder="Enter supply dry bulb temp" step="0.1" oninput="calculateTempRise(); calculateTempRiseCFM()">
+                </div>
+                <div class="form-group">
+                    <label for="supply-wb-rise">Supply Wet Bulb Temp at Plenum (°F)</label>
+                    <input type="number" id="supply-wb-rise" placeholder="Enter supply wet bulb temp" step="0.1">
                 </div>
                 <div class="form-group">
                     <label for="measured-temp-rise">Measured Temperature Rise (°F)</label>
@@ -809,8 +817,12 @@
                     <input type="number" id="return-temp-hood" placeholder="Enter return temp at indoor unit plenum" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-hood">Supply Temperature at Plenum (°F)</label>
-                    <input type="number" id="supply-temp-hood" placeholder="Enter supply temp at indoor unit plenum" step="0.1">
+                    <label for="supply-temp-hood">Supply Dry Bulb Temp at Plenum (°F)</label>
+                    <input type="number" id="supply-temp-hood" placeholder="Enter supply dry bulb temp" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="supply-wb-hood">Supply Wet Bulb Temp at Plenum (°F)</label>
+                    <input type="number" id="supply-wb-hood" placeholder="Enter supply wet bulb temp" step="0.1">
                 </div>
             </div>
         </div>
@@ -1131,6 +1143,14 @@
             <div class="form-group">
                 <label for="problem-summary">Problem Summary *</label>
                 <textarea id="problem-summary" placeholder="Describe the problem or issue" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="current-fault-codes">Current Alarm/Fault Codes</label>
+                <input type="text" id="current-fault-codes" placeholder="Enter current alarm or fault codes">
+            </div>
+            <div class="form-group">
+                <label for="fault-code-history">Alarm/Fault Code History</label>
+                <input type="text" id="fault-code-history" placeholder="Enter alarm or fault code history">
             </div>
             <div class="form-group">
                 <label for="corrective-actions">Corrective Actions Taken</label>
