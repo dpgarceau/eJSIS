@@ -533,6 +533,17 @@
             </div>
 
             <div class="form-group">
+                <label for="jsis-type">JSIS Type *</label>
+                <select id="jsis-type" onchange="handleJsisTypeChange()">
+                    <option value="">-- Select JSIS Type --</option>
+                    <option value="ac">Air Conditioning System</option>
+                    <option value="heatpump">Heat Pump System</option>
+                    <option value="gasfurnace">Gas Furnace Only</option>
+                </select>
+            </div>
+
+            <div id="jsis-equipment-fields" style="display: none;">
+            <div class="form-group">
                 <label for="outdoor-model">Outdoor Unit Model # *</label>
                 <input type="text" id="outdoor-model" placeholder="Enter outdoor unit model number">
             </div>
@@ -572,6 +583,13 @@
             <div class="form-group">
                 <label for="install-date">Install Date (optional)</label>
                 <input type="date" id="install-date">
+            </div>
+            </div><!-- end jsis-equipment-fields -->
+
+            <div id="jsis-gasfurnace-placeholder" style="display: none;">
+                <p style="color: #666; font-style: italic; padding: 20px; text-align: center; background-color: #f9f9f9; border-radius: 4px;">
+                    Gas Furnace Only form coming soon...
+                </p>
             </div>
         </div>
     </div>
@@ -703,28 +721,31 @@
             <!-- Static Pressure Method Fields -->
             <div id="static-fields" style="display: none;">
                 <div class="form-group">
-                    <label for="supply-static">Supply Side Static Pressure (in. w.c.) *</label>
-                    <input type="number" id="supply-static" placeholder="Enter supply static pressure" step="0.01">
+                    <label for="return-static">Return Side Static Pressure (in. w.c.) *</label>
+                    <input type="number" id="return-static" placeholder="e.g. -0.20 (negative)" step="0.01" max="0" oninput="calculateTotalStatic()">
+                    <small>Enter as negative number (2 decimal places)</small>
                 </div>
                 <div class="form-group">
-                    <label for="return-static">Return Side Static Pressure (in. w.c.) *</label>
-                    <input type="number" id="return-static" placeholder="Enter return static pressure" step="0.01">
+                    <label for="supply-static">Supply Side Static Pressure (in. w.c.) *</label>
+                    <input type="number" id="supply-static" placeholder="e.g. 0.45 (positive)" step="0.01" min="0" oninput="calculateTotalStatic()">
+                    <small>Enter as positive number (2 decimal places)</small>
                 </div>
                 <div class="form-group">
                     <label for="total-static">Total External Static Pressure (in. w.c.)</label>
                     <input type="text" id="total-static" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                    <small>Supply − Return (e.g. 0.45 − (−0.20) = 0.65)</small>
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-static">Supply Temperature (°F) *</label>
-                    <input type="number" id="supply-temp-static" placeholder="Enter supply air temperature" step="0.1">
+                    <label for="return-temp-static">Return Temperature at Plenum (°F) *</label>
+                    <input type="number" id="return-temp-static" placeholder="Enter return temp at indoor unit plenum" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="return-temp-static">Return Temperature (°F) *</label>
-                    <input type="number" id="return-temp-static" placeholder="Enter return air temperature" step="0.1">
+                    <label for="supply-temp-static">Supply Temperature at Plenum (°F) *</label>
+                    <input type="number" id="supply-temp-static" placeholder="Enter supply temp at indoor unit plenum" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="calc-cfm-static">Calculated CFM (Static Pressure)</label>
-                    <input type="text" id="calc-cfm-static" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                    <label for="cfm-static">CFM</label>
+                    <input type="number" id="cfm-static" placeholder="Enter CFM" step="1">
                 </div>
             </div>
 
@@ -732,31 +753,34 @@
             <div id="temprise-fields" style="display: none;">
                 <div class="form-group">
                     <label for="heating-voltage">Measured Heating Element Voltage (V)</label>
-                    <input type="number" id="heating-voltage" placeholder="Enter voltage" step="0.1">
+                    <input type="number" id="heating-voltage" placeholder="Enter voltage" step="0.1" oninput="calculateTempRiseCFM()">
                 </div>
                 <div class="form-group">
                     <label for="heating-amperage">Measured Heating Element Amperage (A)</label>
-                    <input type="number" id="heating-amperage" placeholder="Enter amperage" step="0.1">
+                    <input type="number" id="heating-amperage" placeholder="Enter amperage" step="0.1" oninput="calculateTempRiseCFM()">
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-rise">Supply Temperature (°F) *</label>
-                    <input type="number" id="supply-temp-rise" placeholder="Enter supply air temperature" step="0.1">
+                    <label for="return-temp-rise">Return Temperature at Plenum (°F) *</label>
+                    <input type="number" id="return-temp-rise" placeholder="Enter return temp at indoor unit plenum" step="0.1" oninput="calculateTempRise(); calculateTempRiseCFM()">
                 </div>
                 <div class="form-group">
-                    <label for="return-temp-rise">Return Temperature (°F) *</label>
-                    <input type="number" id="return-temp-rise" placeholder="Enter return air temperature" step="0.1">
+                    <label for="supply-temp-rise">Supply Temperature at Plenum (°F) *</label>
+                    <input type="number" id="supply-temp-rise" placeholder="Enter supply temp at indoor unit plenum" step="0.1" oninput="calculateTempRise(); calculateTempRiseCFM()">
                 </div>
                 <div class="form-group">
                     <label for="measured-temp-rise">Measured Temperature Rise (°F)</label>
                     <input type="text" id="measured-temp-rise" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                    <small>Supply − Return</small>
                 </div>
                 <div class="form-group">
                     <label for="elevation">Approximate Height Above Sea Level (ft)</label>
-                    <input type="number" id="elevation" placeholder="Enter elevation">
+                    <input type="number" id="elevation" placeholder="Enter elevation (default: 0)" step="100" oninput="calculateTempRiseCFM()">
+                    <small>Used for altitude correction factor</small>
                 </div>
                 <div class="form-group">
-                    <label for="calc-cfm-temprise">Calculated CFM (Temp Rise)</label>
+                    <label for="calc-cfm-temprise">Calculated CFM</label>
                     <input type="text" id="calc-cfm-temprise" placeholder="Calculated" disabled style="background-color: #f0f0f0;">
+                    <small>CFM = (V × A × 3.412) / (Altitude Factor × ΔT)</small>
                 </div>
             </div>
 
@@ -764,23 +788,29 @@
             <div id="flowhood-fields" style="display: none;">
                 <div class="form-group">
                     <label for="flowhood-method">Flowhood Test Method</label>
-                    <input type="text" id="flowhood-method" placeholder="Enter test method details">
+                    <select id="flowhood-method">
+                        <option value="">-- Select Method --</option>
+                        <option value="uncorrected">Uncorrected</option>
+                        <option value="corrected">Corrected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="total-return-cfm">Total Return CFM *</label>
+                    <input type="number" id="total-return-cfm" placeholder="Enter total return CFM">
+                    <small>Either Return or Supply CFM required</small>
                 </div>
                 <div class="form-group">
                     <label for="total-supply-cfm">Total Supply CFM *</label>
                     <input type="number" id="total-supply-cfm" placeholder="Enter total supply CFM">
+                    <small>Either Return or Supply CFM required</small>
                 </div>
                 <div class="form-group">
-                    <label for="total-return-cfm">Total Return CFM</label>
-                    <input type="number" id="total-return-cfm" placeholder="Enter total return CFM">
+                    <label for="return-temp-hood">Return Temperature at Plenum (°F)</label>
+                    <input type="number" id="return-temp-hood" placeholder="Enter return temp at indoor unit plenum" step="0.1">
                 </div>
                 <div class="form-group">
-                    <label for="supply-temp-hood">Supply Temperature (°F)</label>
-                    <input type="number" id="supply-temp-hood" placeholder="Enter supply air temperature" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label for="return-temp-hood">Return Temperature (°F)</label>
-                    <input type="number" id="return-temp-hood" placeholder="Enter return air temperature" step="0.1">
+                    <label for="supply-temp-hood">Supply Temperature at Plenum (°F)</label>
+                    <input type="number" id="supply-temp-hood" placeholder="Enter supply temp at indoor unit plenum" step="0.1">
                 </div>
             </div>
         </div>
@@ -1109,42 +1139,119 @@
         </div>
     </div>
 
-    <!-- Modal for Data 7: Accessories -->
+    <!-- Modal for Data 7: Additional Info -->
     <div id="modal-data7" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Accessories</div>
+                <div class="modal-title">Additional Info</div>
                 <button class="close-button" onclick="closeModal('data7')">Close</button>
             </div>
 
+            <small>Select all that apply (at least one selection required)</small>
+
+            <div class="field-section-header">System Type</div>
             <div class="form-group">
-                <label>Accessories Installed *</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                    <input type="checkbox" id="communicating-system" style="width: auto; margin-right: 8px;" onchange="toggleCommunicatingFields()">
+                    Communicating System
+                </label>
+            </div>
+            <div id="communicating-fields" style="display: none; margin-left: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 4px;">
+                <div class="form-group">
+                    <label for="software-outdoor">Outdoor Unit Software Version</label>
+                    <input type="text" id="software-outdoor" placeholder="Enter outdoor unit software version">
+                </div>
+                <div class="form-group">
+                    <label for="software-indoor">Indoor Unit Software Version</label>
+                    <input type="text" id="software-indoor" placeholder="Enter indoor unit software version">
+                </div>
+                <div class="form-group">
+                    <label for="software-thermostat">Thermostat Software Version</label>
+                    <input type="text" id="software-thermostat" placeholder="Enter thermostat software version">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                    <input type="checkbox" id="zone-control-system" style="width: auto; margin-right: 8px;" onchange="toggleZoneControlNote()">
+                    Zone Control System
+                </label>
+            </div>
+            <div id="zone-control-note" style="display: none; margin-left: 20px; padding: 10px; background-color: #fff3cd; border-radius: 4px; border: 1px solid #ffc107;">
+                <strong>Note:</strong> All measurements should be completed with all zones open.
+            </div>
+
+            <div class="field-section-header">Accessories Installed</div>
+            <div class="form-group">
                 <div style="margin-top: 10px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: normal;">
-                        <input type="checkbox" id="acc-thermostat" style="width: auto; margin-right: 8px;">
-                        Thermostat
+                        <input type="checkbox" id="acc-filter" style="width: auto; margin-right: 8px;" onchange="toggleAccFilterField()">
+                        Air Filter
+                    </label>
+                    <div id="acc-filter-field" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+                        <input type="text" id="acc-filter-type" placeholder="Enter filter type">
+                    </div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-sound-blanket" style="width: auto; margin-right: 8px;">
+                        Compressor Sound Blanket
                     </label>
                     <label style="display: block; margin-bottom: 8px; font-weight: normal;">
-                        <input type="checkbox" id="acc-filter" style="width: auto; margin-right: 8px;">
-                        Air Filter
+                        <input type="checkbox" id="acc-time-delay" style="width: auto; margin-right: 8px;">
+                        Compressor Time Delay
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-crankcase-heater" style="width: auto; margin-right: 8px;">
+                        Crankcase Heater
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-energy-mgmt" style="width: auto; margin-right: 8px;">
+                        Energy Management (TVA etc.)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-filter-drier" style="width: auto; margin-right: 8px;">
+                        Filter Drier
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-hard-start" style="width: auto; margin-right: 8px;">
+                        Hard Start Kit
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-hot-gas-bypass" style="width: auto; margin-right: 8px;">
+                        Hot Gas Bypass
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-hot-water-recovery" style="width: auto; margin-right: 8px;">
+                        Hot Water Recovery
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-low-ambient" style="width: auto; margin-right: 8px;">
+                        Low Ambient Kit
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
+                        <input type="checkbox" id="acc-pump-down" style="width: auto; margin-right: 8px;">
+                        Pump Down Kit
                     </label>
                     <label style="display: block; margin-bottom: 8px; font-weight: normal;">
                         <input type="checkbox" id="acc-surge" style="width: auto; margin-right: 8px;">
                         Surge Protector
                     </label>
                     <label style="display: block; margin-bottom: 8px; font-weight: normal;">
-                        <input type="checkbox" id="acc-pad" style="width: auto; margin-right: 8px;">
-                        Equipment Pad
+                        <input type="checkbox" id="acc-thermostat" style="width: auto; margin-right: 8px;" onchange="toggleAccThermostatField()">
+                        Thermostat
                     </label>
-                    <label style="display: block; margin-bottom: 8px; font-weight: normal;">
-                        <input type="checkbox" id="acc-disconnect" style="width: auto; margin-right: 8px;">
-                        Disconnect Box
-                    </label>
+                    <div id="acc-thermostat-field" style="display: none; margin-left: 20px; margin-bottom: 10px;">
+                        <input type="text" id="acc-thermostat-model" placeholder="Enter thermostat brand/model">
+                    </div>
                 </div>
             </div>
             <div class="form-group">
-                <label for="acc-other">Other Accessories</label>
-                <textarea id="acc-other" placeholder="List any other accessories installed" rows="3"></textarea>
+                <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                    <input type="checkbox" id="acc-other-check" style="width: auto; margin-right: 8px;">
+                    Other Accessories
+                </label>
+                <div style="margin-left: 20px;">
+                    <textarea id="acc-other" placeholder="List any other accessories installed" rows="3"></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -1193,14 +1300,14 @@
 
         // Define required fields for each section
         const requiredFields = {
-            startJSIS: ['outdoor-model', 'outdoor-serial', 'indoor-model', 'indoor-serial', 'service-date'],
+            startJSIS: ['jsis-type', 'outdoor-model', 'outdoor-serial', 'indoor-model', 'indoor-serial', 'service-date'],
             data1: ['tech-name', 'tech-email', 'tech-mobile', 'company-name', 'company-street', 'company-city', 'company-state', 'company-zip', 'company-phone', 'homeowner-name', 'homeowner-street', 'homeowner-city', 'homeowner-state', 'homeowner-zip'],
             data2: ['airflow-direction', 'outdoor-temp', 'indoor-db', 'airflow-test-method'], // Additional fields depend on test method
             data3: ['refrigerant-type', 'liquid-pressure', 'liquid-temp', 'vapor-pressure', 'vapor-temp'], // Line temps are optional
             data4: ['lineset-length', 'vapor-size', 'liquid-size', 'outdoor-position'], // vertical-separation required if not 'same'
             data5: ['control-voltage', 'voltage-phase'], // Additional fields depend on voltage type
             data6: ['problem-summary'],
-            data7: ['acc-thermostat', 'acc-filter', 'acc-surge', 'acc-pad', 'acc-disconnect'],
+            data7: [], // Special validation: any checkbox selected makes it complete
             data8: [] // Photos are optional
         };
 
@@ -1213,10 +1320,11 @@
         };
 
         // Define method-specific required fields for data2 (Air & Airflow)
+        // Note: flowhood has special either/or logic handled separately in validation
         const airflowMethodFields = {
             'static': ['supply-static', 'return-static', 'supply-temp-static', 'return-temp-static'],
             'temprise': ['supply-temp-rise', 'return-temp-rise'],
-            'flowhood': ['total-supply-cfm']
+            'flowhood': [] // Either return OR supply CFM - handled specially in validation
         };
 
         // Auto-save function - triggered on blur
@@ -1471,6 +1579,95 @@
             }
         }
 
+        // Altitude factor lookup table (elevation in feet -> factor)
+        const altitudeFactors = {
+            0: 1.00,
+            1000: 1.04,
+            2000: 1.08,
+            3000: 1.12,
+            4000: 1.16,
+            5000: 1.20,
+            6000: 1.25,
+            7000: 1.30,
+            8000: 1.35,
+            9000: 1.40,
+            10000: 1.45
+        };
+
+        // Get altitude factor for a given elevation (interpolates between 1000 ft intervals)
+        function getAltitudeFactor(elevation) {
+            if (elevation <= 0) return 1.00;
+            if (elevation >= 10000) return 1.45;
+
+            // Find the lower and upper bounds
+            const lowerElev = Math.floor(elevation / 1000) * 1000;
+            const upperElev = lowerElev + 1000;
+
+            const lowerFactor = altitudeFactors[lowerElev];
+            const upperFactor = altitudeFactors[upperElev];
+
+            // Linear interpolation
+            const fraction = (elevation - lowerElev) / 1000;
+            return lowerFactor + (upperFactor - lowerFactor) * fraction;
+        }
+
+        // Calculate measured temperature rise (supply - return)
+        function calculateTempRise() {
+            const supplyTemp = parseFloat(document.getElementById('supply-temp-rise').value);
+            const returnTemp = parseFloat(document.getElementById('return-temp-rise').value);
+            const tempRiseField = document.getElementById('measured-temp-rise');
+
+            if (!isNaN(supplyTemp) && !isNaN(returnTemp)) {
+                const tempRise = supplyTemp - returnTemp;
+                tempRiseField.value = tempRise.toFixed(1);
+                autoSave('data2', 'measured-temp-rise', tempRise.toFixed(1));
+            } else {
+                tempRiseField.value = '';
+            }
+        }
+
+        // Calculate CFM using temp rise method
+        // CFM = (Volts x Amps x 3.412) / (Altitude Factor x ΔT)
+        function calculateTempRiseCFM() {
+            const volts = parseFloat(document.getElementById('heating-voltage').value);
+            const amps = parseFloat(document.getElementById('heating-amperage').value);
+            const supplyTemp = parseFloat(document.getElementById('supply-temp-rise').value);
+            const returnTemp = parseFloat(document.getElementById('return-temp-rise').value);
+            const elevation = parseFloat(document.getElementById('elevation').value) || 0;
+            const cfmField = document.getElementById('calc-cfm-temprise');
+
+            if (!isNaN(volts) && !isNaN(amps) && !isNaN(supplyTemp) && !isNaN(returnTemp)) {
+                const deltaT = supplyTemp - returnTemp;
+                if (deltaT > 0) {
+                    const altitudeFactor = getAltitudeFactor(elevation);
+                    const cfm = (volts * amps * 3.412) / (altitudeFactor * deltaT);
+                    cfmField.value = Math.round(cfm);
+                    autoSave('data2', 'calc-cfm-temprise', Math.round(cfm));
+                } else {
+                    cfmField.value = '';
+                }
+            } else {
+                cfmField.value = '';
+            }
+        }
+
+        // Calculate total static pressure (supply - return)
+        function calculateTotalStatic() {
+            const supplyStatic = parseFloat(document.getElementById('supply-static').value);
+            const returnStatic = parseFloat(document.getElementById('return-static').value);
+            const totalField = document.getElementById('total-static');
+
+            if (!isNaN(supplyStatic) && !isNaN(returnStatic)) {
+                // Total = supply - return (since return is negative, this gives the difference)
+                // e.g. 0.45 - (-0.20) = 0.65
+                const total = supplyStatic - returnStatic;
+                totalField.value = total.toFixed(2);
+                autoSave('data2', 'total-static', total.toFixed(2));
+            } else {
+                totalField.value = '';
+            }
+        }
+
         // Attach refrigerant calculation listeners
         function attachRefrigerantCalculationListeners() {
             const triggerFields = ['refrigerant-type', 'liquid-pressure', 'liquid-temp', 'vapor-pressure', 'vapor-temp'];
@@ -1550,6 +1747,34 @@
             }
         }
 
+        function toggleCommunicatingFields() {
+            const checkbox = document.getElementById('communicating-system');
+            const fieldsDiv = document.getElementById('communicating-fields');
+            fieldsDiv.style.display = checkbox.checked ? 'block' : 'none';
+            updateButtonStates();
+        }
+
+        function toggleZoneControlNote() {
+            const checkbox = document.getElementById('zone-control-system');
+            const noteDiv = document.getElementById('zone-control-note');
+            noteDiv.style.display = checkbox.checked ? 'block' : 'none';
+            updateButtonStates();
+        }
+
+        function toggleAccThermostatField() {
+            const checkbox = document.getElementById('acc-thermostat');
+            const fieldDiv = document.getElementById('acc-thermostat-field');
+            fieldDiv.style.display = checkbox.checked ? 'block' : 'none';
+            updateButtonStates();
+        }
+
+        function toggleAccFilterField() {
+            const checkbox = document.getElementById('acc-filter');
+            const fieldDiv = document.getElementById('acc-filter-field');
+            fieldDiv.style.display = checkbox.checked ? 'block' : 'none';
+            updateButtonStates();
+        }
+
         function restoreFormData() {
             // Restore all saved data
             Object.keys(formData).forEach(sectionId => {
@@ -1586,10 +1811,38 @@
 
             if (formData.data2 && formData.data2['airflow-test-method']) {
                 updateAirflowFields();
+                // Recalculate based on selected method
+                if (formData.data2['airflow-test-method'] === 'static') {
+                    calculateTotalStatic();
+                } else if (formData.data2['airflow-test-method'] === 'temprise') {
+                    calculateTempRise();
+                    calculateTempRiseCFM();
+                }
             }
 
             if (formData.data4 && formData.data4['outdoor-position']) {
                 updateVerticalSeparationRequired();
+            }
+
+            // Restore JSIS type selection and show/hide fields
+            if (formData.startJSIS && formData.startJSIS['jsis-type']) {
+                handleJsisTypeChange();
+            }
+
+            // Restore Additional Info conditional fields
+            if (formData.data7) {
+                if (formData.data7['communicating-system']) {
+                    toggleCommunicatingFields();
+                }
+                if (formData.data7['zone-control-system']) {
+                    toggleZoneControlNote();
+                }
+                if (formData.data7['acc-thermostat']) {
+                    toggleAccThermostatField();
+                }
+                if (formData.data7['acc-filter']) {
+                    toggleAccFilterField();
+                }
             }
         }
 
@@ -1612,6 +1865,32 @@
 
         function closeInstructionsModal() {
             document.getElementById('modal-instructions').classList.remove('active');
+        }
+
+        function handleJsisTypeChange() {
+            const jsisType = document.getElementById('jsis-type').value;
+            const equipmentFields = document.getElementById('jsis-equipment-fields');
+            const gasFurnacePlaceholder = document.getElementById('jsis-gasfurnace-placeholder');
+
+            if (jsisType === 'gasfurnace') {
+                equipmentFields.style.display = 'none';
+                gasFurnacePlaceholder.style.display = 'block';
+            } else if (jsisType === 'ac' || jsisType === 'heatpump') {
+                equipmentFields.style.display = 'block';
+                gasFurnacePlaceholder.style.display = 'none';
+            } else {
+                // No selection - hide both
+                equipmentFields.style.display = 'none';
+                gasFurnacePlaceholder.style.display = 'none';
+            }
+
+            // Save the selection to formData
+            if (!formData.startJSIS) {
+                formData.startJSIS = {};
+            }
+            formData.startJSIS['jsis-type'] = jsisType;
+
+            updateButtonStates();
         }
 
         function updateButtonStates() {
@@ -1645,9 +1924,63 @@
                     return;
                 }
 
+                // Special handling for data7 (Additional Info) - any checkbox selected makes it complete
+                if (sectionId === 'data7') {
+                    const checkboxIds = [
+                        'communicating-system', 'zone-control-system',
+                        'acc-filter', 'acc-sound-blanket', 'acc-time-delay', 'acc-crankcase-heater',
+                        'acc-energy-mgmt', 'acc-filter-drier', 'acc-hard-start', 'acc-hot-gas-bypass',
+                        'acc-hot-water-recovery', 'acc-low-ambient', 'acc-pump-down', 'acc-surge', 'acc-thermostat',
+                        'acc-other-check'
+                    ];
+                    const anyChecked = checkboxIds.some(id => sectionData[id] === true);
+
+                    if (anyChecked) {
+                        statuses[sectionId] = 'complete';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
+                    return;
+                }
+
                 // If section has no required fields, it's automatically complete
                 if (required.length === 0) {
                     statuses[sectionId] = 'complete';
+                    return;
+                }
+
+                // Special handling for startJSIS - gas furnace only requires jsis-type
+                if (sectionId === 'startJSIS') {
+                    const jsisType = sectionData['jsis-type'];
+
+                    if (!jsisType) {
+                        statuses[sectionId] = 'empty';
+                        return;
+                    }
+
+                    // For gas furnace, only jsis-type is required (placeholder)
+                    if (jsisType === 'gasfurnace') {
+                        statuses[sectionId] = 'complete';
+                        return;
+                    }
+
+                    // For AC and Heat Pump, check equipment fields
+                    const equipmentFields = ['jsis-type', 'outdoor-model', 'outdoor-serial', 'indoor-model', 'indoor-serial', 'service-date'];
+                    let filledCount = 0;
+                    equipmentFields.forEach(fieldId => {
+                        const value = sectionData[fieldId];
+                        if (value !== undefined && value !== null && value !== '') {
+                            filledCount++;
+                        }
+                    });
+
+                    if (filledCount === equipmentFields.length) {
+                        statuses[sectionId] = 'complete';
+                    } else if (filledCount > 0) {
+                        statuses[sectionId] = 'partial';
+                    } else {
+                        statuses[sectionId] = 'empty';
+                    }
                     return;
                 }
 
@@ -1711,6 +2044,31 @@
                             statuses[sectionId] = 'empty';
                         } else {
                             statuses[sectionId] = 'partial';
+                        }
+                        return;
+                    }
+
+                    // Special handling for flowhood - either return OR supply CFM satisfies requirement
+                    if (testMethod === 'flowhood') {
+                        const returnCfm = sectionData['total-return-cfm'];
+                        const supplyCfm = sectionData['total-supply-cfm'];
+                        const hasEitherCfm = (returnCfm !== undefined && returnCfm !== null && returnCfm !== '') ||
+                                             (supplyCfm !== undefined && supplyCfm !== null && supplyCfm !== '');
+
+                        let filledCount = 0;
+                        baseRequired.forEach(fieldId => {
+                            const value = sectionData[fieldId];
+                            if (value !== undefined && value !== null && value !== '') {
+                                filledCount++;
+                            }
+                        });
+
+                        if (filledCount === baseRequired.length && hasEitherCfm) {
+                            statuses[sectionId] = 'complete';
+                        } else if (filledCount > 0 || hasEitherCfm) {
+                            statuses[sectionId] = 'partial';
+                        } else {
+                            statuses[sectionId] = 'empty';
                         }
                         return;
                     }
