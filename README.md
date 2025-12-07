@@ -8,18 +8,20 @@ This is a comprehensive electronic job site inspection sheet (eJSIS) web form de
 
 ## Current Status
 
-**Version**: 2.0
+**Version**: 2.1
 **Current Sections**: 8 (consolidated)
-**Auto-save**: Implemented (blur events)
-**Mobile Optimized**: Yes
+**Backend**: PHP/MySQL
 **Main File**: `ejsis.html`
 
 ## Features
 
+- **JSIS Type Selection**: AC System, Heat Pump System, or Gas Furnace (determines required fields)
 - **Auto-save**: Data persists automatically in browser localStorage on field blur
 - **Progressive validation**: Buttons change color based on completion (grey → orange → green)
 - **Click-outside-to-close**: Tap outside any modal to save and close
 - **Conditional fields**: Dynamic field display based on:
+  - JSIS type (AC/Heat Pump/Gas Furnace)
+  - Heat pump test mode (cooling/heating)
   - Refrigerant type selection
   - Electrical voltage/phase configuration
   - Airflow test method
@@ -28,19 +30,19 @@ This is a comprehensive electronic job site inspection sheet (eJSIS) web form de
 - **Geolocation**: Auto-fill homeowner address from GPS location
 - **Persistent technician data**: Technician/company info survives form clears
 - **PT Chart calculations**: Auto-calculate superheat/subcooling for R-22, R-410A, R-32, R-454B
-- **Offline capable**: Works without internet, stores data locally
+- **CFM calculations**: Temperature rise method with altitude correction
+- **Photo uploads**: Secure photo storage with .htaccess protection
+- **Database submission**: JSON submission to MySQL backend
 - **Mobile-first design**: Touch-friendly interface optimized for phone screens
-- **No spinner arrows**: Number inputs hide up/down controls for better mobile UX
-- **Decimal limiting**: Automatic formatting to 1 decimal place for measurements
 
 ## Data Sections (8 Total)
 
 ### 1. Equipment Identification (Start eJSIS)
+- **JSIS Type selector**: AC, Heat Pump, or Gas Furnace
 - Outdoor unit model and serial (with barcode scan)
 - Indoor unit model and serial (with barcode scan)
 - Coil model and serial (optional, with barcode scan)
-- Date of Service (defaults to today)
-- Install Date (optional)
+- Date of Service, Install Date
 
 ### 2. Contact Information
 - **Servicing Contractor** (persistent across submissions):
@@ -52,151 +54,124 @@ This is a comprehensive electronic job site inspection sheet (eJSIS) web form de
 
 ### 3. Air & Airflow Data
 - Air Handler/Furnace airflow direction
-- **Air Temperatures**:
-  - Outdoor air temp
-  - Indoor dry bulb / wet bulb
+- **Air Temperatures**: Outdoor air, Indoor dry bulb / wet bulb
 - **Airflow Measurement** (dynamic by test method):
-  - Static Pressure: supply/return static, temps, calculated CFM
+  - Static Pressure: return/supply static, temps at plenum (dry bulb & wet bulb), manual CFM
   - Temperature Rise: voltage, amperage, temps, elevation, calculated CFM
   - Flowhood: total supply/return CFM, temps
 
 ### 4. Refrigerant Data
 - Refrigerant type (R-22, R-410A, R-32, R-454B, Other)
-- **Liquid Line (High Side)**:
-  - Gauge pressure, physical temp
-  - Calculated: Saturation temp, Subcooling
-- **Vapor Line (Low Side)**:
-  - Gauge pressure, physical temp
-  - Calculated: Saturation temp, Superheat
-- **Line Temperatures** (optional):
-  - Compressor suction/discharge
-  - Outdoor coil inlet/discharge
-  - Filter drier inlet/discharge
-  - Indoor coil inlet/discharge
+- **Heat Pump Test Mode**: Cooling or Heating (only for heat pump systems)
+- **Liquid Line (High Side)**: Pressure, temp, calculated saturation temp & subcooling
+- **Vapor Line (Low Side)**: Pressure, temp, calculated saturation temp & superheat
+- **Detailed Line Temps** (optional): Compressor, outdoor coil, filter drier, indoor coil
 
 ### 5. Line Set Details
 - Total length, vapor line size, liquid line size
-- Outdoor unit position (above/below/same level as indoor)
-- Vertical separation (required if above/below)
+- Outdoor unit position (above/below/same level)
+- Vertical separation (conditional)
 
 ### 6. Electrical Data
-- **Control Voltage**: Control voltage reading
+- Control voltage
 - **Line Voltage** (dynamic by voltage/phase):
-  - 115V Single Phase: Supply voltage, neutral readings
-  - 208-230V Single Phase: Supply voltage, neutral readings
-  - 208-230V Three Phase: L1-L2-L3 voltages, neutral readings
-  - 460V Three Phase: L1-L2-L3 voltages, neutral readings
-- **Compressor** (dynamic by phase type):
-  - Single Phase: Start (X), Run (Y), Common (Z) amps
-  - Three Phase: L1, L2, L3 amps
-- **Condenser Fan**: Universal fan amps field
+  - 115V Single Phase
+  - 208-230V Single Phase
+  - 208-230V Three Phase
+  - 460V Three Phase
+- Compressor amps, condenser fan amps
 
 ### 7. Problem & Actions
 - Problem summary (required)
-- Corrective actions (optional)
+- Current Alarm/Fault Codes
+- Alarm/Fault Code History
+- Corrective actions
 
-### 8. Accessories
-- Checkbox list: Thermostat, Air Filter, Surge Protector, Equipment Pad, Disconnect Box
-- Other accessories (text field)
+### 8. Additional Info & Photos
+- **System Type**: Communicating system (with software versions), Zone control system
+- **Accessories**: Air filter (with type), thermostat (with brand/model), surge protector, crankcase heater, hard start kit, filter drier, compressor sound blanket, low ambient kit, time delay, energy management, hot gas bypass, hot water recovery, pump down kit, other
+- **Photos**: Outdoor/Indoor unit nameplates, additional photos
 
-### Photos (Optional)
-- Outdoor/Indoor unit nameplates
-- Additional photos (multiple)
+## File Structure
 
-## Field Validation Logic
+```
+ejsis/
+├── ejsis.html                    # Main form (self-contained HTML/CSS/JS)
+├── assets/
+│   └── ejsis_logo.png            # Logo image
+├── api/
+│   ├── jsis_dbconfig.example.php # Database config template
+│   ├── jsis_dbconfig.php         # Actual config (git-ignored)
+│   ├── submit.php                # Form submission endpoint
+│   ├── upload_photo.php          # Photo upload endpoint
+│   └── uploads/
+│       └── .htaccess             # Blocks direct file access
+├── README.md                     # This file
+├── field-specs.md                # Complete field specifications
+├── database-schema.md            # MySQL table schema
+└── .gitignore                    # Git ignore rules
+```
 
-- **Start eJSIS must be complete** before other sections become active
-- **Dynamic validation** based on:
-  - Selected refrigerant type (Other enables manual entry for calculated fields)
-  - Selected voltage/phase (different required fields)
-  - Selected airflow test method (different required fields)
-  - Outdoor unit position (vertical separation required if not same level)
-- **Accessories**: At least one checkbox must be selected
-- **Photos**: Optional, don't block submission
+## Setup Instructions
+
+### Server Deployment
+
+1. Clone or pull the repository:
+```bash
+git clone https://github.com/dpgarceau/eJSIS.git
+cd eJSIS
+```
+
+2. Configure database credentials:
+```bash
+cd api
+cp jsis_dbconfig.example.php jsis_dbconfig.php
+# Edit jsis_dbconfig.php with your MySQL credentials
+```
+
+3. Create database table:
+   - Import SQL from `database-schema.md` into phpMyAdmin
+
+4. Ensure HTTPS is configured (required for geolocation/camera)
+
+5. Set proper permissions on uploads folder:
+```bash
+chmod 755 api/uploads
+```
+
+### For Local Development
+
+1. Use a local PHP server:
+```bash
+php -S localhost:8000
+```
+
+2. Access at `http://localhost:8000/ejsis.html`
+
+Note: Barcode scanning and geolocation require HTTPS in production.
 
 ## Technical Details
 
 ### Storage
 - **Form Data**: `localStorage` key `jsisFormData`
 - **Technician Data**: `localStorage` key `jsisTechnicianData` (persistent)
-- **Format**: JSON objects
+- **Database**: MySQL with 120 columns (see `database-schema.md`)
+- **Photos**: Filesystem storage in `api/uploads/` (protected by .htaccess)
 
-### PT Chart Calculations
-Supports automatic superheat/subcooling calculation for:
-- R-22
-- R-410A
-- R-32
-- R-454B
-
-Uses linear interpolation between data points. "Other" refrigerant type enables manual entry.
+### API Endpoints
+- `POST api/submit.php` - Submit form data as JSON
+- `POST api/upload_photo.php` - Upload photos (multipart/form-data)
 
 ### Browser Support
 - Modern browsers with localStorage support
 - **Barcode Scanning**: Chrome Android, Safari iOS 16.4+, Edge Android
-- **Geolocation**: All modern mobile browsers (requires HTTPS or localhost)
+- **Geolocation**: All modern mobile browsers (requires HTTPS)
 - File upload with camera access on mobile
 
-### Decimal Handling
-- Temperatures, pressures, voltages: 1 decimal place
-- Static pressures: 2 decimal places
-- Auto-formats on blur
+## Documentation
 
-## Setup Instructions
-
-### For Local Development
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ejsis.git
-cd ejsis
-```
-
-2. Open `ejsis.html` in a browser or use a local server:
-```bash
-# Python 3
-python -m http.server 8000
-
-# Node.js
-npx http-server
-```
-
-3. Access at `http://localhost:8000/ejsis.html`
-
-### For GitHub Pages
-
-1. Push to GitHub
-2. Go to Settings → Pages
-3. Select branch and root folder
-4. Access at `https://yourusername.github.io/ejsis/ejsis.html`
-
-### For Production Deployment
-
-The form is a single HTML file with embedded CSS and JavaScript:
-- Upload `ejsis.html` to web server
-- No build process required
-- No dependencies
-- HTTPS required for geolocation and camera features
-
-## Next Steps
-
-- [x] Complete section consolidation (11 → 8)
-- [x] Implement subcooling/superheat calculations
-- [ ] Implement CFM calculations
-- [ ] Add backend integration for form submission
-- [ ] Add email functionality
-- [ ] Add PDF export
-- [ ] Add data export to CSV
-- [ ] Multi-language support
-
-## File Structure
-
-```
-ejsis/
-├── ejsis.html          # Main form (self-contained)
-├── README.md           # This file
-├── .gitignore          # Git ignore rules
-└── docs_private/       # Private documentation (gitignored)
-```
+- `field-specs.md` - Complete field specifications with IDs, types, validation
+- `database-schema.md` - MySQL table creation SQL with all 120 columns
 
 ## Contributing
 
