@@ -161,11 +161,65 @@ try {
     $stmt->execute();
     $recordId = $pdo->lastInsertId();
 
-    echo json_encode([
+    // Generate PDF and send email
+    $pdfPath = null;
+    $emailSent = false;
+    $emailError = null;
+
+    try {
+        // Check if vendor autoload exists (Composer installed)
+        if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+            require_once __DIR__ . '/generate_pdf.php';
+            require_once __DIR__ . '/send_email.php';
+
+            // Generate PDF
+            $pdfGenerator = new EJSIS_PDFGenerator($insertData, $recordId);
+            $pdfPath = $pdfGenerator->generate();
+
+            // Send email
+            $emailSender = new EJSIS_EmailSender();
+            $emailResult = $emailSender->sendReport(
+                $insertData['tech_email'] ?? '',
+                $insertData['tech_name'] ?? 'Technician',
+                $pdfPath,
+                $recordId,
+                $insertData['jsis_type'] ?? 'ac',
+                $insertData['homeowner_name'] ?? ''
+            );
+
+            $emailSent = $emailResult['success'];
+            if (!$emailSent) {
+                $emailError = $emailResult['message'];
+            }
+
+            // Cleanup temp PDF after sending
+            if ($pdfPath && $emailSent) {
+                EJSIS_EmailSender::cleanupTempFile($pdfPath);
+            }
+        } else {
+            // Composer not installed - skip PDF/email
+            error_log("eJSIS: Composer dependencies not installed. Skipping PDF/email.");
+        }
+    } catch (Exception $pdfEmailError) {
+        // Log error but don't fail the submission
+        error_log("eJSIS PDF/Email error: " . $pdfEmailError->getMessage());
+        $emailError = $pdfEmailError->getMessage();
+    }
+
+    $response = [
         'success' => true,
         'record_id' => $recordId,
         'message' => 'JSIS record saved successfully'
-    ]);
+    ];
+
+    if ($emailSent) {
+        $response['email_sent'] = true;
+    } elseif ($emailError) {
+        $response['email_sent'] = false;
+        $response['email_error'] = $emailError;
+    }
+
+    echo json_encode($response);
 
 } catch (Exception $e) {
     error_log("JSIS submit error: " . $e->getMessage());

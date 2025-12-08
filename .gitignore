@@ -3,6 +3,16 @@ docs_private/
 # Database credentials - keep local
 api/jsis_dbconfig.php
 
+# Email credentials - keep local
+api/jsis_emailconfig.php
+
+# Composer dependencies
+api/vendor/
+
 # Uploaded photos
 api/uploads/*
 !api/uploads/.htaccess
+
+# Temporary PDF files
+api/temp/*
+!api/temp/.gitkeep
